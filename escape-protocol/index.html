@@ -25,222 +25,224 @@
   user-select: none !important;
 }
 
-html {
+html, body {
   width: 100% !important;
   height: 100% !important;
-  overflow: hidden !important;
   background: #000 !important;
   background-image: none !important;
-}
-
-body {
-  width: 100% !important;
-  height: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: #000 !important;
-  background-image: none !important;
-  background-color: #000 !important;
   overflow: hidden !important;
   touch-action: none !important;
   font-family: Arial, sans-serif !important;
   position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
+  inset: 0 !important;
 }
 
 #canvas {
   position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
+  inset: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
   width: 100dvw !important;
   height: 100dvh !important;
   display: block !important;
-  border: 0 none !important;
+  border: 0 !important;
   padding: 0 !important;
   background: #000 !important;
-  background-image: none !important;
   -webkit-transform: translateZ(0) !important;
   transform: translateZ(0) !important;
   image-rendering: pixelated !important;
-  image-rendering: -webkit-optimize-contrast !important;
   image-rendering: crisp-edges !important;
+  z-index: 1;
 }
 
-/* ========== SPLASH SCREEN ========== */
+/* ==============================================
+   SPLASH — Clean centered layout, no overlaps
+   ============================================== */
 #splash {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: linear-gradient(180deg, #0b0f1a, #05070d);
+  inset: 0;
+  background: radial-gradient(ellipse at center, #0d1525 0%, #050810 100%);
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 3000;
-  color: white;
-  text-align: center;
-  padding: 20px;
+  z-index: 100;
+  overflow: hidden;
 }
 
-#splash .game-icon { font-size: clamp(3rem, 15vw, 5rem); margin-bottom: 15px; }
+.sp-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 88%;
+  max-width: 420px;
+}
 
-#splash .game-name {
+.sp-icon {
+  font-size: clamp(2.8rem, 10vh, 4.5rem);
+  line-height: 1;
+}
+
+.sp-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: clamp(0.7rem, 3.5vw, 1.2rem);
+  font-size: clamp(0.6rem, 2.8vw, 1rem);
   color: #00ffe7;
-  text-shadow: 0 0 8px #00ffe7, 0 0 16px #00b3ff;
-  margin-bottom: 8px;
+  text-shadow: 0 0 10px #00ffe7, 0 0 25px #00b3ff55;
+  margin-top: clamp(6px, 1.5vh, 14px);
+  letter-spacing: 1px;
 }
 
-#splash .game-sub {
+.sp-sub {
   font-family: 'Press Start 2P', monospace;
-  font-size: clamp(0.4rem, 2vw, 0.6rem);
+  font-size: clamp(0.3rem, 1.3vw, 0.45rem);
   color: #ff9900;
-  margin-bottom: 35px;
+  margin-top: 4px;
 }
 
 #runBtn {
   font-family: 'Press Start 2P', monospace;
-  font-size: clamp(0.7rem, 3vw, 1rem);
+  font-size: clamp(0.55rem, 2.2vw, 0.85rem);
   color: #000;
   background: #00ffe7;
   border: none;
-  padding: 18px 50px;
   border-radius: 50px;
+  padding: clamp(12px, 2.5vh, 18px) clamp(28px, 7vw, 55px);
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 0 20px rgba(0,255,231,0.4), 0 0 40px rgba(0,255,231,0.2);
-  animation: pulse 2s ease-in-out infinite;
+  margin-top: clamp(18px, 4vh, 35px);
+  transition: transform 0.15s;
+  box-shadow: 0 0 25px #00ffe755, 0 0 50px #00ffe722;
+  animation: btnGlow 2.5s ease-in-out infinite;
+  -webkit-appearance: none;
+  position: relative;
+  z-index: 2;
 }
-#runBtn:hover { background: #fff; }
-#runBtn:active { transform: scale(0.95); }
+#runBtn:active { transform: scale(0.92); }
 
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(0,255,231,0.4); }
-  50% { box-shadow: 0 0 30px rgba(0,255,231,0.6), 0 0 60px rgba(0,255,231,0.3); }
+@keyframes btnGlow {
+  0%, 100% { box-shadow: 0 0 20px #00ffe744; }
+  50% { box-shadow: 0 0 35px #00ffe788, 0 0 70px #00ffe733; }
 }
 
-#splash .hint {
-  font-size: clamp(0.35rem, 1.5vw, 0.5rem);
-  color: #555;
-  margin-top: 20px;
+.sp-hint {
   font-family: 'Press Start 2P', monospace;
+  font-size: clamp(0.25rem, 1vw, 0.35rem);
+  color: #333;
+  margin-top: clamp(10px, 2vh, 18px);
 }
 
-/* ========== ADD TO HOME SCREEN PROMPT ========== */
-#a2hsPrompt {
-  display: none;
-  position: fixed;
-  bottom: 0; left: 0;
-  width: 100%;
-  background: linear-gradient(180deg, rgba(0,20,40,0.97), rgba(0,10,20,0.99));
-  color: white;
+/* file size info */
+.sp-size {
   font-family: 'Press Start 2P', monospace;
-  z-index: 4000;
-  padding: 18px 20px;
-  border-top: 2px solid #00ffe7;
-  text-align: center;
-  animation: slideUp 0.4s ease-out;
+  font-size: clamp(0.22rem, 0.9vw, 0.3rem);
+  color: #282828;
+  margin-top: 6px;
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-#a2hsPrompt .a2hs-title {
-  font-size: clamp(0.45rem, 2vw, 0.6rem);
-  color: #00ffe7;
-  margin-bottom: 8px;
-}
-
-#a2hsPrompt .a2hs-text {
-  font-size: clamp(0.35rem, 1.5vw, 0.48rem);
-  color: #aaa;
-  line-height: 1.8;
-}
-
-#a2hsPrompt .a2hs-text b { color: #fff; }
-
-#a2hsClose {
-  position: absolute;
-  top: 8px; right: 12px;
-  background: none;
-  border: none;
-  color: #666;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 5px;
-}
-
-/* ========== LOADER ========== */
+/* ==============================================
+   LOADER — Clean progress bar
+   ============================================== */
 #loader {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  inset: 0;
   display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(180deg, #0b0f1a, #05070d) !important;
+  background: #050810 !important;
   color: white;
-  z-index: 2000;
+  z-index: 90;
 }
 
-#logo {
+.ld-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: clamp(0.8rem, 4vw, 1.4rem);
-  margin-bottom: 32px !important;
+  font-size: clamp(0.55rem, 2.5vw, 0.9rem);
   color: #00ffe7;
-  text-shadow: 0 0 6px #00ffe7, 0 0 12px #00b3ff;
-  text-align: center;
-  padding: 0 20px !important;
+  text-shadow: 0 0 8px #00ffe7;
 }
 
-#barBox {
-  width: 70%; max-width: 400px; height: 18px;
-  border-radius: 20px; background: #222 !important; overflow: hidden;
+.ld-sub {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(0.3rem, 1.2vw, 0.42rem);
+  color: #ff9900;
+  margin-top: 4px;
+  margin-bottom: clamp(16px, 3vh, 28px);
+}
+
+.ld-bar-wrap {
+  width: 78%;
+  max-width: 320px;
+  height: 12px;
+  border-radius: 20px;
+  background: #151525;
+  overflow: hidden;
+  border: 1px solid #252540;
 }
 
 #bar {
-  width: 0%; height: 100%;
-  background: linear-gradient(90deg, #00ffe7, #00b3ff) !important;
-  transition: width 0.2s;
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #00ffe7, #00b3ff);
+  border-radius: 20px;
+  transition: width 0.12s linear;
 }
 
-#status {
-  margin-top: 15px !important; opacity: 0.8; color: white;
+#pct {
   font-family: 'Press Start 2P', monospace;
-  font-size: clamp(0.4rem, 2vw, 0.6rem);
+  font-size: clamp(0.45rem, 2vw, 0.7rem);
+  color: #00ffe7;
+  margin-top: clamp(8px, 1.5vh, 14px);
 }
 
-.fadeOut { animation: fade 0.8s forwards; pointer-events: none; }
-@keyframes fade { to { opacity: 0; visibility: hidden; } }
+#dlInfo {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(0.22rem, 0.9vw, 0.32rem);
+  color: #444;
+  margin-top: 5px;
+}
 
-/* Rotate prompt */
+.fadeOut { animation: fadeAway 0.5s forwards; pointer-events: none; }
+@keyframes fadeAway { to { opacity: 0; visibility: hidden; } }
+
+/* ==============================================
+   A2HS PROMPT
+   ============================================== */
+#a2hs {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #080c18ee;
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  z-index: 200;
+  padding: 12px 14px;
+  border-top: 2px solid #00ffe7;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.a2hs-t { font-size: clamp(0.35rem, 1.4vw, 0.48rem); color: #00ffe7; margin-bottom: 4px; }
+.a2hs-d { font-size: clamp(0.28rem, 1.1vw, 0.38rem); color: #888; line-height: 1.9; }
+.a2hs-d b { color: #fff; }
+#a2hsX { position: absolute; top: 4px; right: 8px; background: none; border: none; color: #555; font-size: 14px; cursor: pointer; }
+
+/* ==============================================
+   ROTATE PROMPT
+   ============================================== */
 #rotatePrompt {
   display: none;
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.95) !important;
+  inset: 0;
+  background: #000000f5 !important;
   color: white;
   font-family: 'Press Start 2P', monospace;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 5000;
+  z-index: 9999;
   text-align: center;
-  padding: 20px !important;
 }
-
-#rotatePrompt .icon { font-size: 48px; margin-bottom: 20px !important; }
-#rotatePrompt .text { font-size: clamp(0.5rem, 2.5vw, 0.7rem); line-height: 1.8; }
+.rt-icon { font-size: clamp(2rem, 8vh, 3rem); margin-bottom: 14px; }
+.rt-text { font-size: clamp(0.4rem, 1.8vw, 0.6rem); line-height: 2; }
 
 @media (orientation: portrait) {
   #rotatePrompt { display: flex !important; }
@@ -253,56 +255,69 @@ footer { display: none !important; }
 <body>
 
 <div id="rotatePrompt">
-  <div class="icon">📱↻</div>
-  <div class="text">Please rotate your device<br>to landscape mode</div>
+  <div class="rt-icon">📱↻</div>
+  <div class="rt-text">Please rotate your device<br>to landscape mode</div>
 </div>
 
 <div id="splash">
-  <div class="game-icon">🚀</div>
-  <div class="game-name">ESCAPE PROTOCOL</div>
-  <div class="game-sub">The AI Planet</div>
-  <button id="runBtn" onclick="runGame()">▶ RUN GAME</button>
-  <div class="hint">Tap to play fullscreen</div>
+  <div class="sp-box">
+    <div class="sp-icon">🚀</div>
+    <div class="sp-title">ESCAPE PROTOCOL</div>
+    <div class="sp-sub">The AI Planet</div>
+    <button id="runBtn" onclick="runGame()">▶ RUN GAME</button>
+    <div class="sp-hint">Tap to play fullscreen</div>
+    <div class="sp-size">~18 MB download</div>
+  </div>
 </div>
 
-<!-- A2HS prompt — shown on mobile browsers that can't do real fullscreen -->
-<div id="a2hsPrompt">
-  <button id="a2hsClose" onclick="this.parentElement.style.display='none'">✕</button>
-  <div class="a2hs-title">📱 WANT TRUE FULLSCREEN?</div>
-  <div class="a2hs-text" id="a2hsText"></div>
+<div id="a2hs">
+  <button id="a2hsX" onclick="this.parentElement.style.display='none'">✕</button>
+  <div class="a2hs-t">📱 TRUE FULLSCREEN</div>
+  <div class="a2hs-d" id="a2hsTxt"></div>
 </div>
 
 <div id="loader">
-  <div id="logo">🚀 ESCAPE PROTOCOL<br><span style="font-size:0.6em;color:#ff9900">The AI Planet</span></div>
-  <div id="barBox"><div id="bar"></div></div>
-  <div id="status">Loading...</div>
+  <div class="ld-title">🚀 ESCAPE PROTOCOL</div>
+  <div class="ld-sub">The AI Planet</div>
+  <div class="ld-bar-wrap"><div id="bar"></div></div>
+  <div id="pct">0%</div>
+  <div id="dlInfo"></div>
 </div>
 
 <canvas id="canvas" style="visibility:hidden;"></canvas>
 
 <script>
 // ============================================================
-// FULLSCREEN STRATEGY (3 layers, like itch.io)
-//
-// Layer 1: Fullscreen API (works on Chrome Android, desktop)
-//   → Hides address bar completely
-//
-// Layer 2: iOS scroll-away trick
-//   → Scroll down slightly to hide Safari minimal UI bar
-//   → Combined with minimal-ui viewport + overflow tricks
-//
-// Layer 3: PWA "Add to Home Screen"
-//   → If user installs as PWA via manifest.json
-//   → display: "fullscreen" = zero browser UI
-//   → Show instructions if on iOS Safari
+// BACK BUTTON — INSTANT REDIRECT
+// Set a flag so resize/fullscreen events can't interfere
 // ============================================================
+var isNavigating = false;
 
+history.pushState({ page: 'game' }, '', window.location.href);
+
+window.addEventListener('popstate', function(e) {
+  isNavigating = true;
+  // Exit fullscreen first if needed (prevents resize flash)
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
+  } catch(err) {}
+  // Immediate redirect
+  window.location.replace('../index.html');
+});
+
+
+// ============================================================
+// RUN GAME
+// ============================================================
 var gameStarted = false;
+
 var isStandalone = window.navigator.standalone === true
   || window.matchMedia('(display-mode: standalone)').matches
   || window.matchMedia('(display-mode: fullscreen)').matches;
 
-var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 var isAndroid = /Android/.test(navigator.userAgent);
 var isMobile = isIOS || isAndroid || ('ontouchstart' in window);
 
@@ -311,77 +326,60 @@ function runGame() {
   if (gameStarted) return;
   gameStarted = true;
 
-  // Layer 1: Fullscreen API
   enterFullscreen();
-
-  // Layer 2: iOS scroll trick — hide Safari bar
-  if (isIOS && !isStandalone) {
-    iosHideBar();
-  }
-
+  if (isIOS && !isStandalone) iosHideBar();
   unlockAudio();
 
   document.getElementById('splash').style.display = 'none';
-  document.getElementById('a2hsPrompt').style.display = 'none';
+  document.getElementById('a2hs').style.display = 'none';
   document.getElementById('loader').style.display = 'flex';
 
-  // Load scripts only now
-  var gameScript = document.createElement('script');
-  gameScript.src = 'game.js';
-  gameScript.onload = function() {
-    var loveScript = document.createElement('script');
-    loveScript.src = 'love.js';
-    loveScript.onload = function() { applicationLoad(); };
-    document.body.appendChild(loveScript);
+  // Dynamically load game scripts
+  var s1 = document.createElement('script');
+  s1.src = 'game.js';
+  s1.onload = function() {
+    var s2 = document.createElement('script');
+    s2.src = 'love.js';
+    s2.onload = function() { applicationLoad(); };
+    document.body.appendChild(s2);
   };
-  document.body.appendChild(gameScript);
+  document.body.appendChild(s1);
 }
 
 
-// === LAYER 1: FULLSCREEN API ===
+// ============================================================
+// FULLSCREEN
+// ============================================================
 function enterFullscreen() {
+  if (isNavigating) return;
   var el = document.documentElement;
-  var isFs = document.fullscreenElement || document.webkitFullscreenElement;
-  if (isFs) return;
+  if (document.fullscreenElement || document.webkitFullscreenElement) return;
   var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   if (rfs) {
     rfs.call(el).then(function() {
-      setTimeout(resizeCanvas, 100);
-      setTimeout(resizeCanvas, 300);
-      setTimeout(resizeCanvas, 600);
+      if (!isNavigating) { setTimeout(resizeCanvas, 100); setTimeout(resizeCanvas, 400); }
     }).catch(function() {
-      // Fullscreen API failed — show A2HS if on mobile
-      if (isMobile && !isStandalone) {
-        showA2HSPrompt();
-      }
+      if (isMobile && !isStandalone) showA2HS();
     });
   } else if (isMobile && !isStandalone) {
-    // No Fullscreen API (iOS Safari) — show A2HS
-    showA2HSPrompt();
+    showA2HS();
   }
 }
 
-// Re-enter fullscreen if exited
-document.addEventListener('fullscreenchange', function() {
-  setTimeout(resizeCanvas, 200);
-});
-document.addEventListener('webkitfullscreenchange', function() {
-  setTimeout(resizeCanvas, 200);
-});
+document.addEventListener('fullscreenchange', function() { if (!isNavigating) setTimeout(resizeCanvas, 150); });
+document.addEventListener('webkitfullscreenchange', function() { if (!isNavigating) setTimeout(resizeCanvas, 150); });
 
 
-// === LAYER 2: iOS SCROLL TRICK ===
-// Scrolling the page slightly causes Safari's address bar to minimize
+// ============================================================
+// iOS SCROLL TRICK
+// ============================================================
 function iosHideBar() {
-  // Temporarily make body taller than viewport
   document.body.style.height = (window.innerHeight + 50) + 'px';
   document.body.style.overflow = 'auto';
   document.body.style.position = 'relative';
-
   setTimeout(function() {
     window.scrollTo(0, 1);
     setTimeout(function() {
-      // Restore fixed positioning
       document.body.style.height = '100%';
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
@@ -391,92 +389,61 @@ function iosHideBar() {
 }
 
 
-// === LAYER 3: ADD TO HOME SCREEN PROMPT ===
-function showA2HSPrompt() {
-  var prompt = document.getElementById('a2hsPrompt');
-  var textEl = document.getElementById('a2hsText');
-
-  if (isIOS) {
-    textEl.innerHTML = 'Tap <b>Share</b> ⬆️ then <b>"Add to Home Screen"</b><br>for true fullscreen with no URL bar';
-  } else {
-    textEl.innerHTML = 'Tap <b>⋮ Menu</b> → <b>"Add to Home Screen"</b><br>for true fullscreen with no URL bar';
-  }
-
-  // Show after a short delay so it doesn't block the game
+// ============================================================
+// A2HS
+// ============================================================
+function showA2HS() {
+  var txt = document.getElementById('a2hsTxt');
+  txt.innerHTML = isIOS
+    ? 'Tap <b>Share ⬆️</b> → <b>"Add to Home Screen"</b>'
+    : 'Tap <b>⋮ Menu</b> → <b>"Add to Home Screen"</b>';
   setTimeout(function() {
     if (!document.fullscreenElement && !document.webkitFullscreenElement && !isStandalone) {
-      prompt.style.display = 'block';
-      // Auto-hide after 8 seconds
-      setTimeout(function() { prompt.style.display = 'none'; }, 8000);
+      document.getElementById('a2hs').style.display = 'block';
+      setTimeout(function() { document.getElementById('a2hs').style.display = 'none'; }, 7000);
     }
-  }, 2000);
+  }, 3000);
 }
 
 
-// === HARDWARE BACK → HUB ===
-history.pushState({ game: true }, '');
-window.addEventListener('popstate', function() {
-  window.location.href = '../index.html';
-});
-
-
-// === CANVAS RESIZE (CSS only) ===
+// ============================================================
+// CANVAS RESIZE (CSS only)
+// ============================================================
 function resizeCanvas() {
-  var canvas = document.getElementById("canvas");
-  if (!canvas) return;
-
+  if (isNavigating) return;
+  var c = document.getElementById("canvas");
+  if (!c) return;
   var w, h;
-  if (window.visualViewport) {
-    w = window.visualViewport.width;
-    h = window.visualViewport.height;
-  } else {
-    w = window.innerWidth;
-    h = window.innerHeight;
-  }
-
-  // On iOS standalone, use screen dimensions for true fullscreen
-  if (isStandalone) {
-    w = screen.width;
-    h = screen.height;
-  }
-
-  canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
-
-  canvas.style.display = 'none';
-  canvas.offsetHeight;
-  canvas.style.display = 'block';
+  if (window.visualViewport) { w = window.visualViewport.width; h = window.visualViewport.height; }
+  else { w = window.innerWidth; h = window.innerHeight; }
+  if (isStandalone) { w = screen.width; h = screen.height; }
+  c.style.width = w + 'px';
+  c.style.height = h + 'px';
 }
 
-window.addEventListener("resize", resizeCanvas);
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', resizeCanvas);
-  window.visualViewport.addEventListener('scroll', resizeCanvas);
-}
+window.addEventListener("resize", function() { if (!isNavigating) resizeCanvas(); });
+if (window.visualViewport) window.visualViewport.addEventListener('resize', function() { if (!isNavigating) resizeCanvas(); });
 window.addEventListener("orientationchange", function() {
-  setTimeout(resizeCanvas, 50);
-  setTimeout(resizeCanvas, 150);
-  setTimeout(resizeCanvas, 300);
-  setTimeout(resizeCanvas, 500);
-  setTimeout(resizeCanvas, 1000);
+  if (isNavigating) return;
+  setTimeout(resizeCanvas, 100); setTimeout(resizeCanvas, 300); setTimeout(resizeCanvas, 600);
 });
 
 
-// === TOUCH PREVENTION ===
-function preventTouch(e) { if (gameStarted) e.preventDefault(); }
-document.addEventListener('touchstart', preventTouch, { passive: false });
-document.addEventListener('touchmove', preventTouch, { passive: false });
-document.addEventListener('touchend', preventTouch, { passive: false });
+// ============================================================
+// TOUCH PREVENTION
+// ============================================================
+function pv(e) { if (gameStarted) e.preventDefault(); }
+document.addEventListener('touchstart', pv, { passive: false });
+document.addEventListener('touchmove', pv, { passive: false });
+document.addEventListener('touchend', pv, { passive: false });
 document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
 document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
 document.addEventListener('gestureend', function(e) { e.preventDefault(); });
 document.addEventListener('contextmenu', function(e) { if (gameStarted) e.preventDefault(); });
 
-var lastTouchEnd = 0;
+var lte = 0;
 document.addEventListener('touchend', function(e) {
-  var now = Date.now();
-  if (now - lastTouchEnd <= 300) e.preventDefault();
-  lastTouchEnd = now;
+  var n = Date.now(); if (n - lte <= 300) e.preventDefault(); lte = n;
 }, { passive: false });
 
 window.addEventListener("keydown", function(e) {
@@ -484,56 +451,71 @@ window.addEventListener("keydown", function(e) {
 });
 
 
-// === AUDIO UNLOCK ===
-var audioUnlocked = false;
+// ============================================================
+// AUDIO UNLOCK
+// ============================================================
+var au = false;
 function unlockAudio() {
-  if (audioUnlocked) return;
+  if (au) return;
   try {
-    var ctx = new (window.AudioContext || window.webkitAudioContext)();
-    var buffer = ctx.createBuffer(1, 1, 22050);
-    var source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    source.start(0);
-    if (ctx.state === 'suspended') ctx.resume();
+    var c = new (window.AudioContext || window.webkitAudioContext)();
+    var b = c.createBuffer(1,1,22050); var s = c.createBufferSource();
+    s.buffer = b; s.connect(c.destination); s.start(0);
+    if (c.state === 'suspended') c.resume();
   } catch(e) {}
-  audioUnlocked = true;
+  au = true;
 }
 
 
-// === LOVE.JS MODULE ===
+// ============================================================
+// MODULE + DOWNLOAD PROGRESS
+// game.data = 18MB, so show real MB progress
+// ============================================================
 var Module = {
   arguments: ["./game.love"],
   INITIAL_MEMORY: 67108864,
   canvas: (function() { return document.getElementById("canvas"); })(),
 
   setStatus: function(text) {
-    var status = document.getElementById("status");
-    if (status) status.textContent = text || "Starting...";
+    if (isNavigating) return;
+
     if (!text) {
+      // Done loading
+      document.getElementById("pct").textContent = "100%";
+      document.getElementById("bar").style.width = "100%";
+      document.getElementById("dlInfo").textContent = "Starting game...";
+
       var loader = document.getElementById("loader");
       var canvas = document.getElementById("canvas");
       if (loader) loader.classList.add("fadeOut");
-      if (canvas) {
-        canvas.style.visibility = "visible";
-        resizeCanvas();
-        enterFullscreen();
-      }
+      if (canvas) { canvas.style.visibility = "visible"; resizeCanvas(); enterFullscreen(); }
+      return;
+    }
+
+    // Parse Emscripten progress: "Downloading data... (loaded/total)"
+    var m = text.match(/\((\d+)\/(\d+)\)/);
+    if (m) {
+      var loaded = parseInt(m[1]);
+      var total = parseInt(m[2]);
+      var p = Math.min(99, Math.round((loaded / total) * 100));
+
+      document.getElementById("bar").style.width = p + "%";
+      document.getElementById("pct").textContent = p + "%";
+
+      var lMB = (loaded / 1048576).toFixed(1);
+      var tMB = (total / 1048576).toFixed(1);
+      document.getElementById("dlInfo").textContent = lMB + " / " + tMB + " MB";
     }
   },
 
   monitorRunDependencies: function(left) {
-    var total = this.totalDependencies || 0;
-    this.totalDependencies = Math.max(total, left);
-    var percent = total ? ((this.totalDependencies - left) / this.totalDependencies) * 100 : 0;
-    var bar = document.getElementById("bar");
-    if (bar) bar.style.width = percent + "%";
+    var t = this.totalDependencies || 0;
+    this.totalDependencies = Math.max(t, left);
   }
 };
 
 function applicationLoad() { Love(Module); }
 
-// Register service worker for PWA
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('../sw.js').catch(function() {});
 }

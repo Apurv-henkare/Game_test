@@ -25,211 +25,191 @@
   user-select: none !important;
 }
 
-html {
+html, body {
   width: 100% !important;
   height: 100% !important;
-  overflow: hidden !important;
   background: #000 !important;
   background-image: none !important;
-}
-
-body {
-  width: 100% !important;
-  height: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: #000 !important;
-  background-image: none !important;
-  background-color: #000 !important;
   overflow: hidden !important;
   touch-action: none !important;
   font-family: Arial, sans-serif !important;
   position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
+  inset: 0 !important;
 }
 
 #canvas {
   position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
+  inset: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
   width: 100dvw !important;
   height: 100dvh !important;
   display: block !important;
-  border: 0 none !important;
+  border: 0 !important;
   padding: 0 !important;
   background: #000 !important;
-  background-image: none !important;
   -webkit-transform: translateZ(0) !important;
   transform: translateZ(0) !important;
   image-rendering: pixelated !important;
-  image-rendering: -webkit-optimize-contrast !important;
   image-rendering: crisp-edges !important;
+  z-index: 1;
 }
 
 #splash {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: linear-gradient(180deg, #0a1f0a, #051505);
+  inset: 0;
+  background: radial-gradient(ellipse at center, #0a1a0d 0%, #030a04 100%);
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 3000;
-  color: white;
-  text-align: center;
-  padding: 20px;
+  z-index: 100;
+  overflow: hidden;
 }
 
-#splash .game-icon { font-size: clamp(3rem, 15vw, 5rem); margin-bottom: 15px; }
+.sp-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 88%;
+  max-width: 420px;
+}
 
-#splash .game-name {
+.sp-icon { font-size: clamp(2.8rem, 10vh, 4.5rem); line-height: 1; }
+
+.sp-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: clamp(0.9rem, 4vw, 1.5rem);
+  font-size: clamp(0.8rem, 3.5vw, 1.3rem);
   color: #4ade80;
-  text-shadow: 0 0 8px #4ade80, 0 0 16px #22c55e;
-  margin-bottom: 35px;
+  text-shadow: 0 0 10px #4ade80, 0 0 25px #22c55e55;
+  margin-top: clamp(6px, 1.5vh, 14px);
 }
 
 #runBtn {
   font-family: 'Press Start 2P', monospace;
-  font-size: clamp(0.7rem, 3vw, 1rem);
+  font-size: clamp(0.55rem, 2.2vw, 0.85rem);
   color: #000;
   background: #4ade80;
   border: none;
-  padding: 18px 50px;
   border-radius: 50px;
+  padding: clamp(12px, 2.5vh, 18px) clamp(28px, 7vw, 55px);
   cursor: pointer;
-  transition: all 0.3s;
-  box-shadow: 0 0 20px rgba(74,222,128,0.4);
-  animation: pulse 2s ease-in-out infinite;
+  margin-top: clamp(22px, 5vh, 40px);
+  transition: transform 0.15s;
+  box-shadow: 0 0 25px #4ade8055;
+  animation: btnGlow 2.5s ease-in-out infinite;
+  -webkit-appearance: none;
 }
-#runBtn:hover { background: #fff; }
-#runBtn:active { transform: scale(0.95); }
+#runBtn:active { transform: scale(0.92); }
 
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(74,222,128,0.4); }
-  50% { box-shadow: 0 0 30px rgba(74,222,128,0.6), 0 0 60px rgba(74,222,128,0.3); }
+@keyframes btnGlow {
+  0%, 100% { box-shadow: 0 0 20px #4ade8044; }
+  50% { box-shadow: 0 0 35px #4ade8088, 0 0 70px #4ade8033; }
 }
 
-#splash .hint {
-  font-size: clamp(0.35rem, 1.5vw, 0.5rem);
-  color: #555;
-  margin-top: 20px;
+.sp-hint {
   font-family: 'Press Start 2P', monospace;
+  font-size: clamp(0.25rem, 1vw, 0.35rem);
+  color: #333;
+  margin-top: clamp(10px, 2vh, 18px);
 }
 
-#a2hsPrompt {
-  display: none;
-  position: fixed;
-  bottom: 0; left: 0;
-  width: 100%;
-  background: linear-gradient(180deg, rgba(0,20,10,0.97), rgba(0,10,5,0.99));
-  color: white;
+.sp-size {
   font-family: 'Press Start 2P', monospace;
-  z-index: 4000;
-  padding: 18px 20px;
-  border-top: 2px solid #4ade80;
-  text-align: center;
-  animation: slideUp 0.4s ease-out;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-#a2hsPrompt .a2hs-title {
-  font-size: clamp(0.45rem, 2vw, 0.6rem);
-  color: #4ade80;
-  margin-bottom: 8px;
-}
-
-#a2hsPrompt .a2hs-text {
-  font-size: clamp(0.35rem, 1.5vw, 0.48rem);
-  color: #aaa;
-  line-height: 1.8;
-}
-
-#a2hsPrompt .a2hs-text b { color: #fff; }
-
-#a2hsClose {
-  position: absolute;
-  top: 8px; right: 12px;
-  background: none;
-  border: none;
-  color: #666;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 5px;
+  font-size: clamp(0.22rem, 0.9vw, 0.3rem);
+  color: #282828;
+  margin-top: 6px;
 }
 
 #loader {
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  inset: 0;
   display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(180deg, #0a1f0a, #051505) !important;
+  background: #030a04 !important;
   color: white;
-  z-index: 2000;
+  z-index: 90;
 }
 
-#logo {
+.ld-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: clamp(1rem, 5vw, 1.8rem);
-  margin-bottom: 32px !important;
+  font-size: clamp(0.7rem, 3vw, 1.1rem);
   color: #4ade80;
-  text-shadow: 0 0 6px #4ade80, 0 0 12px #22c55e;
-  text-align: center;
-  padding: 0 20px !important;
+  text-shadow: 0 0 8px #4ade80;
+  margin-bottom: clamp(16px, 3vh, 28px);
 }
 
-#barBox {
-  width: 70%; max-width: 400px; height: 18px;
-  border-radius: 20px; background: #222 !important; overflow: hidden;
+.ld-bar-wrap {
+  width: 78%;
+  max-width: 320px;
+  height: 12px;
+  border-radius: 20px;
+  background: #101a12;
+  overflow: hidden;
+  border: 1px solid #1a2a1c;
 }
 
 #bar {
-  width: 0%; height: 100%;
-  background: linear-gradient(90deg, #4ade80, #22c55e) !important;
-  transition: width 0.2s;
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #22c55e);
+  border-radius: 20px;
+  transition: width 0.12s linear;
 }
 
-#status {
-  margin-top: 15px !important; opacity: 0.8; color: white;
+#pct {
   font-family: 'Press Start 2P', monospace;
-  font-size: clamp(0.4rem, 2vw, 0.6rem);
+  font-size: clamp(0.45rem, 2vw, 0.7rem);
+  color: #4ade80;
+  margin-top: clamp(8px, 1.5vh, 14px);
 }
 
-.fadeOut { animation: fade 0.8s forwards; pointer-events: none; }
-@keyframes fade { to { opacity: 0; visibility: hidden; } }
+#dlInfo {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(0.22rem, 0.9vw, 0.32rem);
+  color: #444;
+  margin-top: 5px;
+}
+
+.fadeOut { animation: fadeAway 0.5s forwards; pointer-events: none; }
+@keyframes fadeAway { to { opacity: 0; visibility: hidden; } }
+
+#a2hs {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #060e08ee;
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  z-index: 200;
+  padding: 12px 14px;
+  border-top: 2px solid #4ade80;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.a2hs-t { font-size: clamp(0.35rem, 1.4vw, 0.48rem); color: #4ade80; margin-bottom: 4px; }
+.a2hs-d { font-size: clamp(0.28rem, 1.1vw, 0.38rem); color: #888; line-height: 1.9; }
+.a2hs-d b { color: #fff; }
+#a2hsX { position: absolute; top: 4px; right: 8px; background: none; border: none; color: #555; font-size: 14px; cursor: pointer; }
 
 #rotatePrompt {
   display: none;
   position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.95) !important;
+  inset: 0;
+  background: #000000f5 !important;
   color: white;
   font-family: 'Press Start 2P', monospace;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  z-index: 5000;
+  z-index: 9999;
   text-align: center;
-  padding: 20px !important;
 }
-
-#rotatePrompt .icon { font-size: 48px; margin-bottom: 20px !important; }
-#rotatePrompt .text { font-size: clamp(0.5rem, 2.5vw, 0.7rem); line-height: 1.8; }
+.rt-icon { font-size: clamp(2rem, 8vh, 3rem); margin-bottom: 14px; }
+.rt-text { font-size: clamp(0.4rem, 1.8vw, 0.6rem); line-height: 2; }
 
 @media (orientation: portrait) {
   #rotatePrompt { display: flex !important; }
@@ -242,37 +222,52 @@ footer { display: none !important; }
 <body>
 
 <div id="rotatePrompt">
-  <div class="icon">📱↻</div>
-  <div class="text">Please rotate your device<br>to landscape mode</div>
+  <div class="rt-icon">📱↻</div>
+  <div class="rt-text">Please rotate your device<br>to landscape mode</div>
 </div>
 
 <div id="splash">
-  <div class="game-icon">🐍</div>
-  <div class="game-name">SNAKE</div>
-  <button id="runBtn" onclick="runGame()">▶ RUN GAME</button>
-  <div class="hint">Tap to play fullscreen</div>
+  <div class="sp-box">
+    <div class="sp-icon">🐍</div>
+    <div class="sp-title">SNAKE</div>
+    <button id="runBtn" onclick="runGame()">▶ RUN GAME</button>
+    <div class="sp-hint">Tap to play fullscreen</div>
+    <div class="sp-size">Quick load</div>
+  </div>
 </div>
 
-<div id="a2hsPrompt">
-  <button id="a2hsClose" onclick="this.parentElement.style.display='none'">✕</button>
-  <div class="a2hs-title">📱 WANT TRUE FULLSCREEN?</div>
-  <div class="a2hs-text" id="a2hsText"></div>
+<div id="a2hs">
+  <button id="a2hsX" onclick="this.parentElement.style.display='none'">✕</button>
+  <div class="a2hs-t">📱 TRUE FULLSCREEN</div>
+  <div class="a2hs-d" id="a2hsTxt"></div>
 </div>
 
 <div id="loader">
-  <div id="logo">🐍 SNAKE</div>
-  <div id="barBox"><div id="bar"></div></div>
-  <div id="status">Loading...</div>
+  <div class="ld-title">🐍 SNAKE</div>
+  <div class="ld-bar-wrap"><div id="bar"></div></div>
+  <div id="pct">0%</div>
+  <div id="dlInfo"></div>
 </div>
 
 <canvas id="canvas" style="visibility:hidden;"></canvas>
 
 <script>
+var isNavigating = false;
+
+history.pushState({ page: 'game' }, '', window.location.href);
+window.addEventListener('popstate', function(e) {
+  isNavigating = true;
+  try {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
+  } catch(err) {}
+  window.location.replace('../index.html');
+});
+
 var gameStarted = false;
 var isStandalone = window.navigator.standalone === true
   || window.matchMedia('(display-mode: standalone)').matches
   || window.matchMedia('(display-mode: fullscreen)').matches;
-
 var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 var isAndroid = /Android/.test(navigator.userAgent);
 var isMobile = isIOS || isAndroid || ('ontouchstart' in window);
@@ -283,42 +278,35 @@ function runGame() {
   enterFullscreen();
   if (isIOS && !isStandalone) iosHideBar();
   unlockAudio();
-
   document.getElementById('splash').style.display = 'none';
-  document.getElementById('a2hsPrompt').style.display = 'none';
+  document.getElementById('a2hs').style.display = 'none';
   document.getElementById('loader').style.display = 'flex';
 
-  var gameScript = document.createElement('script');
-  gameScript.src = 'game.js';
-  gameScript.onload = function() {
-    var loveScript = document.createElement('script');
-    loveScript.src = 'love.js';
-    loveScript.onload = function() { applicationLoad(); };
-    document.body.appendChild(loveScript);
+  var s1 = document.createElement('script');
+  s1.src = 'game.js';
+  s1.onload = function() {
+    var s2 = document.createElement('script');
+    s2.src = 'love.js';
+    s2.onload = function() { applicationLoad(); };
+    document.body.appendChild(s2);
   };
-  document.body.appendChild(gameScript);
+  document.body.appendChild(s1);
 }
 
 function enterFullscreen() {
+  if (isNavigating) return;
   var el = document.documentElement;
-  var isFs = document.fullscreenElement || document.webkitFullscreenElement;
-  if (isFs) return;
+  if (document.fullscreenElement || document.webkitFullscreenElement) return;
   var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   if (rfs) {
     rfs.call(el).then(function() {
-      setTimeout(resizeCanvas, 100);
-      setTimeout(resizeCanvas, 300);
-      setTimeout(resizeCanvas, 600);
-    }).catch(function() {
-      if (isMobile && !isStandalone) showA2HSPrompt();
-    });
-  } else if (isMobile && !isStandalone) {
-    showA2HSPrompt();
-  }
+      if (!isNavigating) { setTimeout(resizeCanvas, 100); setTimeout(resizeCanvas, 400); }
+    }).catch(function() { if (isMobile && !isStandalone) showA2HS(); });
+  } else if (isMobile && !isStandalone) { showA2HS(); }
 }
 
-document.addEventListener('fullscreenchange', function() { setTimeout(resizeCanvas, 200); });
-document.addEventListener('webkitfullscreenchange', function() { setTimeout(resizeCanvas, 200); });
+document.addEventListener('fullscreenchange', function() { if (!isNavigating) setTimeout(resizeCanvas, 150); });
+document.addEventListener('webkitfullscreenchange', function() { if (!isNavigating) setTimeout(resizeCanvas, 150); });
 
 function iosHideBar() {
   document.body.style.height = (window.innerHeight + 50) + 'px';
@@ -335,91 +323,64 @@ function iosHideBar() {
   }, 100);
 }
 
-function showA2HSPrompt() {
-  var textEl = document.getElementById('a2hsText');
-  if (isIOS) {
-    textEl.innerHTML = 'Tap <b>Share</b> ⬆️ then <b>"Add to Home Screen"</b><br>for true fullscreen with no URL bar';
-  } else {
-    textEl.innerHTML = 'Tap <b>⋮ Menu</b> → <b>"Add to Home Screen"</b><br>for true fullscreen with no URL bar';
-  }
+function showA2HS() {
+  var txt = document.getElementById('a2hsTxt');
+  txt.innerHTML = isIOS
+    ? 'Tap <b>Share ⬆️</b> → <b>"Add to Home Screen"</b>'
+    : 'Tap <b>⋮ Menu</b> → <b>"Add to Home Screen"</b>';
   setTimeout(function() {
     if (!document.fullscreenElement && !document.webkitFullscreenElement && !isStandalone) {
-      document.getElementById('a2hsPrompt').style.display = 'block';
-      setTimeout(function() { document.getElementById('a2hsPrompt').style.display = 'none'; }, 8000);
+      document.getElementById('a2hs').style.display = 'block';
+      setTimeout(function() { document.getElementById('a2hs').style.display = 'none'; }, 7000);
     }
-  }, 2000);
+  }, 3000);
 }
-
-history.pushState({ game: true }, '');
-window.addEventListener('popstate', function() {
-  window.location.href = '../index.html';
-});
 
 function resizeCanvas() {
-  var canvas = document.getElementById("canvas");
-  if (!canvas) return;
+  if (isNavigating) return;
+  var c = document.getElementById("canvas");
+  if (!c) return;
   var w, h;
-  if (window.visualViewport) {
-    w = window.visualViewport.width;
-    h = window.visualViewport.height;
-  } else {
-    w = window.innerWidth;
-    h = window.innerHeight;
-  }
+  if (window.visualViewport) { w = window.visualViewport.width; h = window.visualViewport.height; }
+  else { w = window.innerWidth; h = window.innerHeight; }
   if (isStandalone) { w = screen.width; h = screen.height; }
-  canvas.style.width = w + 'px';
-  canvas.style.height = h + 'px';
-  canvas.style.display = 'none';
-  canvas.offsetHeight;
-  canvas.style.display = 'block';
+  c.style.width = w + 'px';
+  c.style.height = h + 'px';
 }
 
-window.addEventListener("resize", resizeCanvas);
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', resizeCanvas);
-  window.visualViewport.addEventListener('scroll', resizeCanvas);
-}
+window.addEventListener("resize", function() { if (!isNavigating) resizeCanvas(); });
+if (window.visualViewport) window.visualViewport.addEventListener('resize', function() { if (!isNavigating) resizeCanvas(); });
 window.addEventListener("orientationchange", function() {
-  setTimeout(resizeCanvas, 50);
-  setTimeout(resizeCanvas, 150);
-  setTimeout(resizeCanvas, 300);
-  setTimeout(resizeCanvas, 500);
-  setTimeout(resizeCanvas, 1000);
+  if (isNavigating) return;
+  setTimeout(resizeCanvas, 100); setTimeout(resizeCanvas, 300); setTimeout(resizeCanvas, 600);
 });
 
-function preventTouch(e) { if (gameStarted) e.preventDefault(); }
-document.addEventListener('touchstart', preventTouch, { passive: false });
-document.addEventListener('touchmove', preventTouch, { passive: false });
-document.addEventListener('touchend', preventTouch, { passive: false });
+function pv(e) { if (gameStarted) e.preventDefault(); }
+document.addEventListener('touchstart', pv, { passive: false });
+document.addEventListener('touchmove', pv, { passive: false });
+document.addEventListener('touchend', pv, { passive: false });
 document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
 document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
 document.addEventListener('gestureend', function(e) { e.preventDefault(); });
 document.addEventListener('contextmenu', function(e) { if (gameStarted) e.preventDefault(); });
-
-var lastTouchEnd = 0;
+var lte = 0;
 document.addEventListener('touchend', function(e) {
-  var now = Date.now();
-  if (now - lastTouchEnd <= 300) e.preventDefault();
-  lastTouchEnd = now;
+  var n = Date.now(); if (n - lte <= 300) e.preventDefault(); lte = n;
 }, { passive: false });
-
 window.addEventListener("keydown", function(e) {
   if ([32, 37, 38, 39, 40].includes(e.keyCode)) e.preventDefault();
 });
 
-var audioUnlocked = false;
+var au = false;
 function unlockAudio() {
-  if (audioUnlocked) return;
+  if (au) return;
   try {
-    var ctx = new (window.AudioContext || window.webkitAudioContext)();
-    var buffer = ctx.createBuffer(1, 1, 22050);
-    var source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    source.start(0);
-    if (ctx.state === 'suspended') ctx.resume();
+    var c = new (window.AudioContext || window.webkitAudioContext)();
+    var b = c.createBuffer(1,1,22050); var s = c.createBufferSource();
+    s.buffer = b; s.connect(c.destination); s.start(0);
+    if (c.state === 'suspended') c.resume();
   } catch(e) {}
-  audioUnlocked = true;
+  au = true;
 }
 
 var Module = {
@@ -427,34 +388,34 @@ var Module = {
   INITIAL_MEMORY: 67108864,
   canvas: (function() { return document.getElementById("canvas"); })(),
   setStatus: function(text) {
-    var status = document.getElementById("status");
-    if (status) status.textContent = text || "Starting...";
+    if (isNavigating) return;
     if (!text) {
+      document.getElementById("pct").textContent = "100%";
+      document.getElementById("bar").style.width = "100%";
+      document.getElementById("dlInfo").textContent = "Starting...";
       var loader = document.getElementById("loader");
       var canvas = document.getElementById("canvas");
       if (loader) loader.classList.add("fadeOut");
-      if (canvas) {
-        canvas.style.visibility = "visible";
-        resizeCanvas();
-        enterFullscreen();
-      }
+      if (canvas) { canvas.style.visibility = "visible"; resizeCanvas(); enterFullscreen(); }
+      return;
+    }
+    var m = text.match(/\((\d+)\/(\d+)\)/);
+    if (m) {
+      var loaded = parseInt(m[1]), total = parseInt(m[2]);
+      var p = Math.min(99, Math.round((loaded / total) * 100));
+      document.getElementById("bar").style.width = p + "%";
+      document.getElementById("pct").textContent = p + "%";
+      document.getElementById("dlInfo").textContent = (loaded/1048576).toFixed(1) + " / " + (total/1048576).toFixed(1) + " MB";
     }
   },
   monitorRunDependencies: function(left) {
-    var total = this.totalDependencies || 0;
-    this.totalDependencies = Math.max(total, left);
-    var percent = total ? ((this.totalDependencies - left) / this.totalDependencies) * 100 : 0;
-    var bar = document.getElementById("bar");
-    if (bar) bar.style.width = percent + "%";
+    var t = this.totalDependencies || 0;
+    this.totalDependencies = Math.max(t, left);
   }
 };
 
 function applicationLoad() { Love(Module); }
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('../sw.js').catch(function() {});
-}
-
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js').catch(function() {});
 resizeCanvas();
 </script>
 
