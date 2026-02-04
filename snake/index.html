@@ -31,8 +31,7 @@
       overflow: hidden;
       touch-action: none !important;
       position: fixed;
-      top: 0;
-      left: 0;
+      inset: 0;
       font-family: Arial, sans-serif;
     }
 
@@ -63,7 +62,7 @@
       font-size: 8px;
       text-decoration: none;
       transition: all 0.3s;
-      touch-action: none;
+      touch-action: manipulation;
     }
 
     #backBtn:hover {
@@ -87,19 +86,17 @@
 
     #logo {
       font-family: 'Press Start 2P', monospace;
-      font-size: clamp(0.9rem, 5vw, 1.8rem);
-      letter-spacing: 1px;
-      margin-bottom: 32px;
+      font-size: clamp(1rem, 6vw, 2rem);
+      letter-spacing: 2px;
+      margin-bottom: 40px;
       color: #00ffe7;
-      text-shadow: 0 0 10px #00ffe7, 0 0 20px #00b3ff;
-      text-align: center;
-      padding: 0 20px;
+      text-shadow: 0 0 15px #00ffe7, 0 0 30px #00b3ff;
     }
 
     #barBox {
-      width: 70%;
-      max-width: 400px;
-      height: 18px;
+      width: 80%;
+      max-width: 450px;
+      height: 20px;
       border-radius: 20px;
       background: #222;
       overflow: hidden;
@@ -109,24 +106,46 @@
       width: 0%;
       height: 100%;
       background: linear-gradient(90deg, #00ffe7, #ff6b6b);
-      transition: width 0.2s ease;
+      transition: width 0.25s ease;
     }
 
     #status {
-      margin-top: 15px;
-      opacity: 0.8;
+      margin-top: 20px;
+      opacity: 0.85;
       font-family: 'Press Start 2P', monospace;
-      font-size: clamp(0.4rem, 2.5vw, 0.7rem);
+      font-size: clamp(0.5rem, 3vw, 0.8rem);
     }
 
     .fadeOut {
-      animation: fade 0.8s forwards;
+      animation: fade 0.9s forwards;
       pointer-events: none;
     }
 
     @keyframes fade {
       to { opacity: 0; visibility: hidden; }
     }
+
+    /* Fullscreen prompt overlay */
+    #fsPrompt {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      color: #00ffe7;
+      font-family: 'Press Start 2P', monospace;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1500;
+      text-align: center;
+      padding: 30px;
+      font-size: clamp(0.9rem, 5vw, 1.4rem);
+      line-height: 1.6;
+      touch-action: manipulation;
+      cursor: pointer;
+    }
+
+    #fsPrompt.hidden { display: none; }
 
     #rotatePrompt {
       display: none;
@@ -140,12 +159,12 @@
       align-items: center;
       z-index: 2000;
       text-align: center;
-      padding: 20px;
+      padding: 30px;
       touch-action: none;
     }
 
-    #rotatePrompt .icon { font-size: 64px; margin-bottom: 24px; }
-    #rotatePrompt .text { font-size: 1rem; line-height: 1.6; }
+    #rotatePrompt .icon { font-size: 80px; margin-bottom: 30px; }
+    #rotatePrompt .text { font-size: clamp(0.8rem, 4vw, 1.2rem); line-height: 1.7; }
 
     @media (orientation: portrait) {
       #rotatePrompt { display: flex; }
@@ -159,19 +178,24 @@
 
 <div id="rotatePrompt">
   <div class="icon">📱↻</div>
-  <div class="text">Please rotate your device<br>to LANDSCAPE mode for best experience</div>
+  <div class="text">Rotate to LANDSCAPE<br>for best gameplay</div>
 </div>
 
 <div id="loader">
   <div id="logo">🚀 SPACE SHOOTER</div>
   <div id="barBox"><div id="bar"></div></div>
-  <div id="status">Downloading assets...</div>
+  <div id="status">Loading assets...</div>
+</div>
+
+<!-- Fullscreen prompt (shows briefly after load on mobile) -->
+<div id="fsPrompt" class="hidden">
+  Tap anywhere to enter<br>FULLSCREEN mode<br>(recommended for mobile)
 </div>
 
 <canvas id="canvas"></canvas>
 
 <script>
-// === Block all default browser touch behaviors aggressively ===
+// === Aggressive touch blocking ===
 const blockOptions = { passive: false, capture: true };
 
 function blockDefault(e) {
@@ -186,54 +210,74 @@ function blockDefault(e) {
 document.addEventListener('contextmenu', e => e.preventDefault(), blockOptions);
 document.addEventListener('dblclick', e => e.preventDefault(), blockOptions);
 
-// === Canvas resize ===
+// === Resize canvas to true full viewport ===
 function resizeCanvas() {
   const canvas = document.getElementById('canvas');
   if (!canvas) return;
-  canvas.style.width = '100vw';
-  canvas.style.height = '100vh';
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  canvas.style.width = '100vw';
+  canvas.style.height = '100vh';
 }
 
 window.addEventListener('resize', resizeCanvas);
-window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 150));
+window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
 
-// === Try to go fullscreen on first real touch (after loader hides) ===
+// === Fullscreen logic ===
 let fullscreenTriggered = false;
 
-function tryFullscreen() {
+function goFullscreen() {
   if (fullscreenTriggered) return;
   const elem = document.documentElement;
-  const methods = [
-    'requestFullscreen',
-    'webkitRequestFullscreen',
-    'mozRequestFullScreen',
-    'msRequestFullscreen'
-  ];
 
-  for (const method of methods) {
-    if (elem[method]) {
-      elem[method]().catch(() => {});
+  const requestMethod = 
+    elem.requestFullscreen ||
+    elem.webkitRequestFullscreen ||
+    elem.mozRequestFullScreen ||
+    elem.msRequestFullscreen;
+
+  if (requestMethod) {
+    requestMethod.call(elem).then(() => {
       fullscreenTriggered = true;
-      break;
-    }
+      console.log("Fullscreen activated");
+      hideFsPrompt();
+    }).catch(err => {
+      console.warn("Fullscreen failed:", err);
+      showFsPrompt(); // fallback prompt
+    });
+  } else {
+    console.warn("Fullscreen API not supported");
+    showFsPrompt();
   }
 }
 
-// Trigger fullscreen when game actually starts (loader faded)
-document.addEventListener('touchstart', function(e) {
+function showFsPrompt() {
+  const prompt = document.getElementById('fsPrompt');
+  if (prompt) {
+    prompt.classList.remove('hidden');
+    // Auto-hide after 8 seconds if ignored
+    setTimeout(hideFsPrompt, 8000);
+  }
+}
+
+function hideFsPrompt() {
+  const prompt = document.getElementById('fsPrompt');
+  if (prompt) prompt.classList.add('hidden');
+}
+
+// Trigger on first touch after game starts
+document.addEventListener('touchstart', function fsHandler(e) {
   if (!fullscreenTriggered && document.getElementById('loader').classList.contains('fadeOut')) {
-    tryFullscreen();
+    goFullscreen();
+    // Remove listener after first attempt
+    document.removeEventListener('touchstart', fsHandler);
   }
 }, { passive: true });
 
-// Prevent keyboard scrolling on arrows/space
-window.addEventListener('keydown', e => {
-  if ([32, 37, 38, 39, 40].includes(e.keyCode)) e.preventDefault();
-}, { passive: false });
+// Also allow tapping the prompt itself
+document.getElementById('fsPrompt')?.addEventListener('touchstart', goFullscreen, { passive: true });
 
-// Audio context unlock (mobile browsers require user gesture)
+// === Audio unlock ===
 let audioUnlocked = false;
 function unlockAudio() {
   if (audioUnlocked) return;
@@ -251,14 +295,19 @@ function unlockAudio() {
 document.addEventListener('touchstart', unlockAudio, { passive: true });
 document.addEventListener('touchend', unlockAudio, { passive: true });
 
-// === LÖVE.js / Emscripten setup ===
+// === Prevent keyboard navigation ===
+window.addEventListener('keydown', e => {
+  if ([32, 37, 38, 39, 40].includes(e.keyCode)) e.preventDefault();
+}, { passive: false });
+
+// === LÖVE.js Module ===
 var Module = {
   arguments: ["./game.love"],
   INITIAL_MEMORY: 33554432,
   canvas: document.getElementById("canvas"),
   setStatus: function(text) {
     const status = document.getElementById("status");
-    if (status) status.textContent = text || "Starting...";
+    if (status) status.textContent = text || "Starting engine...";
     if (!text) {
       const loader = document.getElementById("loader");
       const canvas = document.getElementById("canvas");
@@ -266,6 +315,10 @@ var Module = {
       if (canvas) {
         canvas.style.visibility = "visible";
         resizeCanvas();
+        // Show fullscreen prompt ~1s after game visible
+        setTimeout(() => {
+          if (!fullscreenTriggered) showFsPrompt();
+        }, 1200);
       }
     }
   },
@@ -279,7 +332,8 @@ var Module = {
 };
 
 Module.setStatus("Downloading...");
-window.onerror = () => Module.setStatus("Error - Check Console");
+window.onerror = () => Module.setStatus("Error – check console");
+
 function applicationLoad() { Love(Module); }
 
 resizeCanvas();
