@@ -5,11 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GameHub">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="../manifest.json">
 
 <title>SNAKE - GameHub</title>
-
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
 <style>
@@ -41,7 +43,6 @@ body {
   background-color: #000 !important;
   overflow: hidden !important;
   touch-action: none !important;
-  -webkit-overflow-scrolling: auto !important;
   font-family: Arial, sans-serif !important;
   position: fixed !important;
   top: 0 !important;
@@ -70,7 +71,6 @@ body {
   image-rendering: crisp-edges !important;
 }
 
-/* SPLASH */
 #splash {
   position: fixed;
   top: 0; left: 0;
@@ -86,17 +86,14 @@ body {
   padding: 20px;
 }
 
-#splash .game-icon {
-  font-size: clamp(3rem, 15vw, 5rem);
-  margin-bottom: 15px;
-}
+#splash .game-icon { font-size: clamp(3rem, 15vw, 5rem); margin-bottom: 15px; }
 
 #splash .game-name {
   font-family: 'Press Start 2P', monospace;
   font-size: clamp(0.9rem, 4vw, 1.5rem);
   color: #4ade80;
   text-shadow: 0 0 8px #4ade80, 0 0 16px #22c55e;
-  margin-bottom: 40px;
+  margin-bottom: 35px;
 }
 
 #runBtn {
@@ -109,26 +106,69 @@ body {
   border-radius: 50px;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 0 20px rgba(74,222,128,0.4), 0 0 40px rgba(74,222,128,0.2);
+  box-shadow: 0 0 20px rgba(74,222,128,0.4);
   animation: pulse 2s ease-in-out infinite;
 }
-
 #runBtn:hover { background: #fff; }
 #runBtn:active { transform: scale(0.95); }
 
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(74,222,128,0.4), 0 0 40px rgba(74,222,128,0.2); }
+  0%, 100% { box-shadow: 0 0 20px rgba(74,222,128,0.4); }
   50% { box-shadow: 0 0 30px rgba(74,222,128,0.6), 0 0 60px rgba(74,222,128,0.3); }
 }
 
 #splash .hint {
-  font-size: clamp(0.4rem, 1.8vw, 0.55rem);
+  font-size: clamp(0.35rem, 1.5vw, 0.5rem);
   color: #555;
-  margin-top: 25px;
+  margin-top: 20px;
   font-family: 'Press Start 2P', monospace;
 }
 
-/* Loader */
+#a2hsPrompt {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0;
+  width: 100%;
+  background: linear-gradient(180deg, rgba(0,20,10,0.97), rgba(0,10,5,0.99));
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  z-index: 4000;
+  padding: 18px 20px;
+  border-top: 2px solid #4ade80;
+  text-align: center;
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+#a2hsPrompt .a2hs-title {
+  font-size: clamp(0.45rem, 2vw, 0.6rem);
+  color: #4ade80;
+  margin-bottom: 8px;
+}
+
+#a2hsPrompt .a2hs-text {
+  font-size: clamp(0.35rem, 1.5vw, 0.48rem);
+  color: #aaa;
+  line-height: 1.8;
+}
+
+#a2hsPrompt .a2hs-text b { color: #fff; }
+
+#a2hsClose {
+  position: absolute;
+  top: 8px; right: 12px;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 5px;
+}
+
 #loader {
   position: fixed;
   top: 0; left: 0;
@@ -145,7 +185,6 @@ body {
 #logo {
   font-family: 'Press Start 2P', monospace;
   font-size: clamp(1rem, 5vw, 1.8rem);
-  letter-spacing: 1px;
   margin-bottom: 32px !important;
   color: #4ade80;
   text-shadow: 0 0 6px #4ade80, 0 0 12px #22c55e;
@@ -211,7 +250,13 @@ footer { display: none !important; }
   <div class="game-icon">🐍</div>
   <div class="game-name">SNAKE</div>
   <button id="runBtn" onclick="runGame()">▶ RUN GAME</button>
-  <div class="hint">Game will enter fullscreen</div>
+  <div class="hint">Tap to play fullscreen</div>
+</div>
+
+<div id="a2hsPrompt">
+  <button id="a2hsClose" onclick="this.parentElement.style.display='none'">✕</button>
+  <div class="a2hs-title">📱 WANT TRUE FULLSCREEN?</div>
+  <div class="a2hs-text" id="a2hsText"></div>
 </div>
 
 <div id="loader">
@@ -224,13 +269,23 @@ footer { display: none !important; }
 
 <script>
 var gameStarted = false;
+var isStandalone = window.navigator.standalone === true
+  || window.matchMedia('(display-mode: standalone)').matches
+  || window.matchMedia('(display-mode: fullscreen)').matches;
+
+var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+var isAndroid = /Android/.test(navigator.userAgent);
+var isMobile = isIOS || isAndroid || ('ontouchstart' in window);
 
 function runGame() {
   if (gameStarted) return;
   gameStarted = true;
-  goFullscreen();
+  enterFullscreen();
+  if (isIOS && !isStandalone) iosHideBar();
   unlockAudio();
+
   document.getElementById('splash').style.display = 'none';
+  document.getElementById('a2hsPrompt').style.display = 'none';
   document.getElementById('loader').style.display = 'flex';
 
   var gameScript = document.createElement('script');
@@ -244,24 +299,59 @@ function runGame() {
   document.body.appendChild(gameScript);
 }
 
-function goFullscreen() {
+function enterFullscreen() {
   var el = document.documentElement;
   var isFs = document.fullscreenElement || document.webkitFullscreenElement;
   if (isFs) return;
   var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   if (rfs) {
     rfs.call(el).then(function() {
-      setTimeout(resizeCanvas, 200);
-      setTimeout(resizeCanvas, 500);
-    }).catch(function(e) { console.log('Fullscreen request:', e); });
+      setTimeout(resizeCanvas, 100);
+      setTimeout(resizeCanvas, 300);
+      setTimeout(resizeCanvas, 600);
+    }).catch(function() {
+      if (isMobile && !isStandalone) showA2HSPrompt();
+    });
+  } else if (isMobile && !isStandalone) {
+    showA2HSPrompt();
   }
 }
 
 document.addEventListener('fullscreenchange', function() { setTimeout(resizeCanvas, 200); });
 document.addEventListener('webkitfullscreenchange', function() { setTimeout(resizeCanvas, 200); });
 
+function iosHideBar() {
+  document.body.style.height = (window.innerHeight + 50) + 'px';
+  document.body.style.overflow = 'auto';
+  document.body.style.position = 'relative';
+  setTimeout(function() {
+    window.scrollTo(0, 1);
+    setTimeout(function() {
+      document.body.style.height = '100%';
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      resizeCanvas();
+    }, 300);
+  }, 100);
+}
+
+function showA2HSPrompt() {
+  var textEl = document.getElementById('a2hsText');
+  if (isIOS) {
+    textEl.innerHTML = 'Tap <b>Share</b> ⬆️ then <b>"Add to Home Screen"</b><br>for true fullscreen with no URL bar';
+  } else {
+    textEl.innerHTML = 'Tap <b>⋮ Menu</b> → <b>"Add to Home Screen"</b><br>for true fullscreen with no URL bar';
+  }
+  setTimeout(function() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && !isStandalone) {
+      document.getElementById('a2hsPrompt').style.display = 'block';
+      setTimeout(function() { document.getElementById('a2hsPrompt').style.display = 'none'; }, 8000);
+    }
+  }, 2000);
+}
+
 history.pushState({ game: true }, '');
-window.addEventListener('popstate', function(e) {
+window.addEventListener('popstate', function() {
   window.location.href = '../index.html';
 });
 
@@ -276,6 +366,7 @@ function resizeCanvas() {
     w = window.innerWidth;
     h = window.innerHeight;
   }
+  if (isStandalone) { w = screen.width; h = screen.height; }
   canvas.style.width = w + 'px';
   canvas.style.height = h + 'px';
   canvas.style.display = 'none';
@@ -345,7 +436,7 @@ var Module = {
       if (canvas) {
         canvas.style.visibility = "visible";
         resizeCanvas();
-        goFullscreen();
+        enterFullscreen();
       }
     }
   },
@@ -359,6 +450,11 @@ var Module = {
 };
 
 function applicationLoad() { Love(Module); }
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('../sw.js').catch(function() {});
+}
+
 resizeCanvas();
 </script>
 
