@@ -27,7 +27,7 @@
     height: 100%;
     background: #000;
     overflow: hidden;
-    touch-action: none;
+    touch-action: none; /* Disables browser gestures like pull-to-refresh */
     position: fixed;
   }
 
@@ -40,6 +40,7 @@
     image-rendering: pixelated;
   }
 
+  /* LOADER & START OVERLAY */
   #loader {
     position: fixed;
     top: 0; left: 0;
@@ -48,54 +49,56 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: #050510;
+    background: radial-gradient(circle, #0a0a2e 0%, #000000 100%);
     z-index: 100;
     cursor: pointer;
   }
 
   #logo {
     font-family: 'Press Start 2P', cursive;
-    font-size: clamp(20px, 5vw, 40px);
+    font-size: clamp(18px, 5vw, 36px);
     color: #00ffe7;
-    text-shadow: 0 0 10px #00ffe7;
-    margin-bottom: 30px;
+    text-shadow: 0 0 15px #00ffe7;
+    margin-bottom: 40px;
     text-align: center;
   }
 
   #status {
     font-family: 'Press Start 2P', cursive;
-    font-size: 10px;
+    font-size: 9px;
     color: #888;
     margin-bottom: 20px;
   }
 
   #barBox {
     width: 60%;
-    max-width: 300px;
-    height: 6px;
-    background: #333;
-    border-radius: 3px;
-    margin-bottom: 20px;
+    max-width: 280px;
+    height: 8px;
+    background: #222;
+    border-radius: 4px;
+    margin-bottom: 30px;
     overflow: hidden;
+    border: 1px solid #333;
   }
 
   #bar {
     width: 0%;
     height: 100%;
-    background: #ff6b6b;
+    background: linear-gradient(90deg, #00ffe7, #ff6b6b);
     transition: width 0.2s;
   }
 
   #tapHint {
     display: none;
     font-family: 'Press Start 2P', cursive;
-    font-size: 12px;
+    font-size: 11px;
     color: #fff;
-    animation: blink 1s infinite;
+    animation: pulse 1.5s infinite;
   }
 
-  @keyframes blink { 50% { opacity: 0.5; } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
+  /* ROTATE PROMPT */
   #rotatePrompt {
     display: none;
     position: fixed;
@@ -119,15 +122,15 @@
 <body>
 
   <div id="rotatePrompt">
-    <div style="font-size: 40px; margin-bottom: 20px;">↻</div>
-    <div style="font-size: 12px;">ROTATE TO PLAY</div>
+    <div style="font-size: 40px; margin-bottom: 20px;">📱↻</div>
+    <div style="font-size: 10px;">ROTATE TO LANDSCAPE</div>
   </div>
 
   <div id="loader" onclick="startGame()">
     <div id="logo">SPACE SHOOTER</div>
-    <div id="status">LOADING...</div>
+    <div id="status">LOADING ASSETS...</div>
     <div id="barBox"><div id="bar"></div></div>
-    <div id="tapHint">TAP TO START FULLSCREEN</div>
+    <div id="tapHint">TAP TO START CHAMP</div>
   </div>
 
   <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
@@ -136,6 +139,7 @@
     const canvas = document.getElementById("canvas");
     const loader = document.getElementById("loader");
     const tapHint = document.getElementById("tapHint");
+    let gameStarted = false;
 
     function resize() {
       canvas.width = window.innerWidth;
@@ -143,33 +147,49 @@
     }
     window.addEventListener('resize', resize);
 
-    // --- FULLSCREEN & START ---
+    // --- FULLSCREEN & NAVIGATION ---
     function startGame() {
       if (tapHint.style.display !== "block") return;
 
       const el = document.documentElement;
       const rfs = el.requestFullscreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-      if (rfs) rfs.call(el).catch(() => {});
+      
+      if (rfs) {
+        rfs.call(el).then(() => {
+          // Detect when user exits fullscreen (usually via back button)
+          window.addEventListener('resize', detectBackNavigation);
+        }).catch(() => {});
+      }
 
-      // Audio unlock
+      // Audio unlock for mobile
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) { new AudioContext().resume(); }
 
       loader.style.display = "none";
       canvas.style.visibility = "visible";
+      gameStarted = true;
       resize();
 
-      // IMPORTANT: Push a state so the next 'back' button press works as intended
+      // Push a state so the physical back button has a "page" to leave
       history.pushState({playing: true}, "");
     }
 
-    // --- BACK BUTTON LOGIC ---
+    function detectBackNavigation() {
+      // If we are no longer in fullscreen, the user used a back gesture/button
+      const isFullscreen = document.fullscreenElement || document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement;
+      
+      if (gameStarted && !isFullscreen) {
+        window.removeEventListener('resize', detectBackNavigation);
+        window.location.href = "../index.html"; 
+      }
+    }
+
+    // Secondary listener for browsers that fire popstate instead of resizing
     window.onpopstate = function() {
-      // When user presses phone back button, go to main menu
       window.location.href = "../index.html";
     };
 
-    // --- MULTI-TOUCH FIXES ---
+    // --- MULTI-TOUCH STABILITY ---
     window.addEventListener('touchstart', e => {
       if (e.target === canvas) e.preventDefault();
     }, { passive: false });
@@ -178,16 +198,17 @@
       if (e.target === canvas) e.preventDefault();
     }, { passive: false });
 
-    // --- LOVE.JS ENGINE ---
+    // --- LOVE.JS ENGINE CONFIG ---
     var Module = {
       arguments: ["./game.love"],
       INITIAL_MEMORY: 33554432,
       canvas: canvas,
       setStatus: function(text) {
-        document.getElementById("status").textContent = text;
+        const s = document.getElementById("status");
+        if (s) s.textContent = text;
         if (!text) {
           document.getElementById("barBox").style.display = "none";
-          document.getElementById("status").style.display = "none";
+          if (s) s.style.display = "none";
           tapHint.style.display = "block";
         }
       },
