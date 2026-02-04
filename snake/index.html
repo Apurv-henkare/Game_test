@@ -1,122 +1,130 @@
 <!doctype html>
 <html lang="en-us">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#000000">
+  <meta name="format-detection" content="telephone=no">
 
-<title>SPACE SHOOTER</title>
+  <title>SPACE SHOOTER</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
-<style>
-  * {
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-  }
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
 
-  html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    background: #000;
-    overflow: hidden;
-    touch-action: none; /* Disables browser gestures like pull-to-refresh */
-    position: fixed;
-  }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+      touch-action: none !important;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
 
-  #canvas {
-    display: block;
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    visibility: hidden;
-    image-rendering: pixelated;
-  }
+    #canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      visibility: hidden;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      touch-action: none;
+      transform: translateZ(0); /* Hardware acceleration */
+      /* REMOVED: safe-area padding that was causing touch offset */
+    }
 
-  /* LOADER & START OVERLAY */
-  #loader {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: radial-gradient(circle, #0a0a2e 0%, #000000 100%);
-    z-index: 100;
-    cursor: pointer;
-  }
+    /* Loader */
+    #loader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle, #0a0a2e 0%, #000000 100%);
+      z-index: 100;
+      cursor: pointer;
+      touch-action: manipulation; /* Allows taps without gestures */
+    }
 
-  #logo {
-    font-family: 'Press Start 2P', cursive;
-    font-size: clamp(18px, 5vw, 36px);
-    color: #00ffe7;
-    text-shadow: 0 0 15px #00ffe7;
-    margin-bottom: 40px;
-    text-align: center;
-  }
+    #logo {
+      font-family: 'Press Start 2P', cursive;
+      font-size: clamp(18px, 5vw, 36px);
+      color: #00ffe7;
+      text-shadow: 0 0 15px #00ffe7;
+      margin-bottom: 40px;
+      text-align: center;
+    }
 
-  #status {
-    font-family: 'Press Start 2P', cursive;
-    font-size: 9px;
-    color: #888;
-    margin-bottom: 20px;
-  }
+    #status {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 9px;
+      color: #888;
+      margin-bottom: 20px;
+    }
 
-  #barBox {
-    width: 60%;
-    max-width: 280px;
-    height: 8px;
-    background: #222;
-    border-radius: 4px;
-    margin-bottom: 30px;
-    overflow: hidden;
-    border: 1px solid #333;
-  }
+    #barBox {
+      width: 60%;
+      max-width: 280px;
+      height: 8px;
+      background: #222;
+      border-radius: 4px;
+      margin-bottom: 30px;
+      overflow: hidden;
+      border: 1px solid #333;
+    }
 
-  #bar {
-    width: 0%;
-    height: 100%;
-    background: linear-gradient(90deg, #00ffe7, #ff6b6b);
-    transition: width 0.2s;
-  }
+    #bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #00ffe7, #ff6b6b);
+      transition: width 0.2s;
+    }
 
-  #tapHint {
-    display: none;
-    font-family: 'Press Start 2P', cursive;
-    font-size: 11px;
-    color: #fff;
-    animation: pulse 1.5s infinite;
-  }
+    #tapHint {
+      display: none;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 11px;
+      color: #fff;
+      animation: pulse 1.5s infinite;
+    }
 
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-  /* ROTATE PROMPT */
-  #rotatePrompt {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: #000;
-    z-index: 999;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-family: 'Press Start 2P', cursive;
-  }
+    /* Rotate Prompt */
+    #rotatePrompt {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 999;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-family: 'Press Start 2P', cursive;
+      touch-action: none;
+    }
 
-  @media screen and (orientation: portrait) {
-    #rotatePrompt { display: flex; }
-  }
-</style>
+    @media screen and (orientation: portrait) {
+      #rotatePrompt { display: flex; }
+    }
+  </style>
 </head>
 
 <body>
@@ -126,79 +134,106 @@
     <div style="font-size: 10px;">ROTATE TO LANDSCAPE</div>
   </div>
 
-  <div id="loader" onclick="startGame()">
+  <div id="loader">
     <div id="logo">SPACE SHOOTER</div>
     <div id="status">LOADING ASSETS...</div>
     <div id="barBox"><div id="bar"></div></div>
     <div id="tapHint">TAP TO START CHAMP</div>
   </div>
 
-  <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+  <canvas id="canvas"></canvas>
 
   <script>
     const canvas = document.getElementById("canvas");
     const loader = document.getElementById("loader");
     const tapHint = document.getElementById("tapHint");
     let gameStarted = false;
+    let fullscreenTriggered = false;
 
-    function resize() {
+    // Global touch blocking (prevent scroll/zoom but allow propagation to canvas)
+    const blockOptions = { passive: false, capture: true };
+
+    function blockDefault(e) {
+      e.preventDefault();
+      // REMOVED stopPropagation() to ensure events reach the canvas
+      // Optional debug: console.log('Touch at:', e.touches[0].clientX, e.touches[0].clientY);
+    }
+
+    ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(evt => {
+      document.addEventListener(evt, blockDefault, blockOptions);
+    });
+
+    document.addEventListener('contextmenu', e => e.preventDefault(), blockOptions);
+    document.addEventListener('dblclick', e => e.preventDefault(), blockOptions);
+
+    // Resize handler
+    function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      canvas.style.width = '100vw';
+      canvas.style.height = '100vh';
+      if (!fullscreenTriggered) tryFullscreen();
     }
-    window.addEventListener('resize', resize);
 
-    // --- FULLSCREEN & NAVIGATION ---
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+
+    // Aggressive fullscreen
+    function tryFullscreen() {
+      if (fullscreenTriggered) return;
+      const elem = document.documentElement;
+      const methods = [
+        elem.requestFullscreen,
+        elem.webkitRequestFullscreen,
+        elem.mozRequestFullScreen,
+        elem.msRequestFullscreen
+      ];
+
+      for (const method of methods) {
+        if (method) {
+          method.call(elem).then(() => {
+            fullscreenTriggered = true;
+            console.log('Fullscreen activated');
+          }).catch(err => console.warn('Fullscreen failed:', err));
+          break;
+        }
+      }
+    }
+
+    // Start game logic
     function startGame() {
       if (tapHint.style.display !== "block") return;
 
-      const el = document.documentElement;
-      const rfs = el.requestFullscreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-      
-      if (rfs) {
-        rfs.call(el).then(() => {
-          // Detect when user exits fullscreen (usually via back button)
-          window.addEventListener('resize', detectBackNavigation);
-        }).catch(() => {});
-      }
+      tryFullscreen();
 
-      // Audio unlock for mobile
+      // Audio unlock
       const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) { new AudioContext().resume(); }
+      if (AudioContext) new AudioContext().resume();
 
       loader.style.display = "none";
       canvas.style.visibility = "visible";
       gameStarted = true;
-      resize();
+      resizeCanvas();
 
-      // Push a state so the physical back button has a "page" to leave
+      // History for back button
       history.pushState({playing: true}, "");
     }
 
-    function detectBackNavigation() {
-      // If we are no longer in fullscreen, the user used a back gesture/button
+    // Detect back/exit fullscreen
+    window.addEventListener('resize', () => {
       const isFullscreen = document.fullscreenElement || document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement;
-      
       if (gameStarted && !isFullscreen) {
-        window.removeEventListener('resize', detectBackNavigation);
-        window.location.href = "../index.html"; 
+        window.location.href = "../index.html";
       }
-    }
+    });
 
-    // Secondary listener for browsers that fire popstate instead of resizing
-    window.onpopstate = function() {
-      window.location.href = "../index.html";
-    };
+    window.onpopstate = () => { window.location.href = "../index.html"; };
 
-    // --- MULTI-TOUCH STABILITY ---
-    window.addEventListener('touchstart', e => {
-      if (e.target === canvas) e.preventDefault();
-    }, { passive: false });
-    
-    window.addEventListener('touchmove', e => {
-      if (e.target === canvas) e.preventDefault();
-    }, { passive: false });
+    // Loader start triggers (both click and touchstart for reliability)
+    loader.addEventListener('click', startGame);
+    loader.addEventListener('touchstart', startGame, { passive: false });
 
-    // --- LOVE.JS ENGINE CONFIG ---
+    // LÖVE.js Module
     var Module = {
       arguments: ["./game.love"],
       INITIAL_MEMORY: 33554432,
@@ -210,6 +245,7 @@
           document.getElementById("barBox").style.display = "none";
           if (s) s.style.display = "none";
           tapHint.style.display = "block";
+          tryFullscreen(); // Auto-try after load
         }
       },
       monitorRunDependencies: function(left) {
@@ -219,7 +255,7 @@
       }
     };
   </script>
-  
+
   <script src="game.js"></script>
   <script async src="love.js" onload="Love(Module)"></script>
 
