@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="GameHub">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
 <meta name="theme-color" content="#000000">
-<link rel="manifest" href="../manifest.json">
 
 <title>SNAKE - GameHub</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -175,26 +173,6 @@ html, body {
 .fadeOut { animation: fadeAway 0.5s forwards; pointer-events: none; }
 @keyframes fadeAway { to { opacity: 0; visibility: hidden; } }
 
-#a2hs {
-  display: none;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: #060e08ee;
-  color: white;
-  font-family: 'Press Start 2P', monospace;
-  z-index: 200;
-  padding: 12px 14px;
-  border-top: 2px solid #4ade80;
-  text-align: center;
-  animation: slideUp 0.3s ease-out;
-}
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-.a2hs-t { font-size: clamp(0.35rem, 1.4vw, 0.48rem); color: #4ade80; margin-bottom: 4px; }
-.a2hs-d { font-size: clamp(0.28rem, 1.1vw, 0.38rem); color: #888; line-height: 1.9; }
-.a2hs-d b { color: #fff; }
-#a2hsX { position: absolute; top: 4px; right: 8px; background: none; border: none; color: #555; font-size: 14px; cursor: pointer; }
-
 #rotatePrompt {
   display: none;
   position: fixed;
@@ -236,12 +214,6 @@ footer { display: none !important; }
   </div>
 </div>
 
-<div id="a2hs">
-  <button id="a2hsX" onclick="this.parentElement.style.display='none'">✕</button>
-  <div class="a2hs-t">📱 TRUE FULLSCREEN</div>
-  <div class="a2hs-d" id="a2hsTxt"></div>
-</div>
-
 <div id="loader">
   <div class="ld-title">🐍 SNAKE</div>
   <div class="ld-bar-wrap"><div id="bar"></div></div>
@@ -252,34 +224,41 @@ footer { display: none !important; }
 <canvas id="canvas" style="visibility:hidden;"></canvas>
 
 <script>
+// ============================================================
+// BACK BUTTON: Android back exits fullscreen first.
+// We detect that fullscreen exited (and we didn't do it)
+// → immediately redirect to hub. One press = done.
+// ============================================================
 var isNavigating = false;
+var weExitedFullscreen = false;
 
-history.pushState({ page: 'game' }, '', window.location.href);
-window.addEventListener('popstate', function(e) {
+function goToHub() {
+  if (isNavigating) return;
   isNavigating = true;
-  try {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
-  } catch(err) {}
   window.location.replace('../index.html');
-});
+}
+
+function onFullscreenExit() {
+  var isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  if (!isFs && gameStarted && !weExitedFullscreen && !isNavigating) {
+    goToHub();
+  }
+  weExitedFullscreen = false;
+}
+
+document.addEventListener('fullscreenchange', onFullscreenExit);
+document.addEventListener('webkitfullscreenchange', onFullscreenExit);
 
 var gameStarted = false;
-var isStandalone = window.navigator.standalone === true
-  || window.matchMedia('(display-mode: standalone)').matches
-  || window.matchMedia('(display-mode: fullscreen)').matches;
 var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-var isAndroid = /Android/.test(navigator.userAgent);
-var isMobile = isIOS || isAndroid || ('ontouchstart' in window);
 
 function runGame() {
   if (gameStarted) return;
   gameStarted = true;
   enterFullscreen();
-  if (isIOS && !isStandalone) iosHideBar();
+  if (isIOS) iosHideBar();
   unlockAudio();
   document.getElementById('splash').style.display = 'none';
-  document.getElementById('a2hs').style.display = 'none';
   document.getElementById('loader').style.display = 'flex';
 
   var s1 = document.createElement('script');
@@ -301,12 +280,9 @@ function enterFullscreen() {
   if (rfs) {
     rfs.call(el).then(function() {
       if (!isNavigating) { setTimeout(resizeCanvas, 100); setTimeout(resizeCanvas, 400); }
-    }).catch(function() { if (isMobile && !isStandalone) showA2HS(); });
-  } else if (isMobile && !isStandalone) { showA2HS(); }
+    }).catch(function() {});
+  }
 }
-
-document.addEventListener('fullscreenchange', function() { if (!isNavigating) setTimeout(resizeCanvas, 150); });
-document.addEventListener('webkitfullscreenchange', function() { if (!isNavigating) setTimeout(resizeCanvas, 150); });
 
 function iosHideBar() {
   document.body.style.height = (window.innerHeight + 50) + 'px';
@@ -323,19 +299,6 @@ function iosHideBar() {
   }, 100);
 }
 
-function showA2HS() {
-  var txt = document.getElementById('a2hsTxt');
-  txt.innerHTML = isIOS
-    ? 'Tap <b>Share ⬆️</b> → <b>"Add to Home Screen"</b>'
-    : 'Tap <b>⋮ Menu</b> → <b>"Add to Home Screen"</b>';
-  setTimeout(function() {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement && !isStandalone) {
-      document.getElementById('a2hs').style.display = 'block';
-      setTimeout(function() { document.getElementById('a2hs').style.display = 'none'; }, 7000);
-    }
-  }, 3000);
-}
-
 function resizeCanvas() {
   if (isNavigating) return;
   var c = document.getElementById("canvas");
@@ -343,7 +306,6 @@ function resizeCanvas() {
   var w, h;
   if (window.visualViewport) { w = window.visualViewport.width; h = window.visualViewport.height; }
   else { w = window.innerWidth; h = window.innerHeight; }
-  if (isStandalone) { w = screen.width; h = screen.height; }
   c.style.width = w + 'px';
   c.style.height = h + 'px';
 }
@@ -415,7 +377,6 @@ var Module = {
 };
 
 function applicationLoad() { Love(Module); }
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js').catch(function() {});
 resizeCanvas();
 </script>
 

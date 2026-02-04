@@ -5,11 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="GameHub">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
 <meta name="theme-color" content="#000000">
-<link rel="manifest" href="../manifest.json">
 
 <title>ESCAPE PROTOCOL - GameHub</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -55,9 +53,7 @@ html, body {
   z-index: 1;
 }
 
-/* ==============================================
-   SPLASH — Clean centered layout, no overlaps
-   ============================================== */
+/* ========== SPLASH ========== */
 #splash {
   position: fixed;
   inset: 0;
@@ -109,11 +105,9 @@ html, body {
   cursor: pointer;
   margin-top: clamp(18px, 4vh, 35px);
   transition: transform 0.15s;
-  box-shadow: 0 0 25px #00ffe755, 0 0 50px #00ffe722;
+  box-shadow: 0 0 25px #00ffe755;
   animation: btnGlow 2.5s ease-in-out infinite;
   -webkit-appearance: none;
-  position: relative;
-  z-index: 2;
 }
 #runBtn:active { transform: scale(0.92); }
 
@@ -129,7 +123,6 @@ html, body {
   margin-top: clamp(10px, 2vh, 18px);
 }
 
-/* file size info */
 .sp-size {
   font-family: 'Press Start 2P', monospace;
   font-size: clamp(0.22rem, 0.9vw, 0.3rem);
@@ -137,9 +130,7 @@ html, body {
   margin-top: 6px;
 }
 
-/* ==============================================
-   LOADER — Clean progress bar
-   ============================================== */
+/* ========== LOADER ========== */
 #loader {
   position: fixed;
   inset: 0;
@@ -202,32 +193,7 @@ html, body {
 .fadeOut { animation: fadeAway 0.5s forwards; pointer-events: none; }
 @keyframes fadeAway { to { opacity: 0; visibility: hidden; } }
 
-/* ==============================================
-   A2HS PROMPT
-   ============================================== */
-#a2hs {
-  display: none;
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: #080c18ee;
-  color: white;
-  font-family: 'Press Start 2P', monospace;
-  z-index: 200;
-  padding: 12px 14px;
-  border-top: 2px solid #00ffe7;
-  text-align: center;
-  animation: slideUp 0.3s ease-out;
-}
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-.a2hs-t { font-size: clamp(0.35rem, 1.4vw, 0.48rem); color: #00ffe7; margin-bottom: 4px; }
-.a2hs-d { font-size: clamp(0.28rem, 1.1vw, 0.38rem); color: #888; line-height: 1.9; }
-.a2hs-d b { color: #fff; }
-#a2hsX { position: absolute; top: 4px; right: 8px; background: none; border: none; color: #555; font-size: 14px; cursor: pointer; }
-
-/* ==============================================
-   ROTATE PROMPT
-   ============================================== */
+/* ========== ROTATE ========== */
 #rotatePrompt {
   display: none;
   position: fixed;
@@ -270,12 +236,6 @@ footer { display: none !important; }
   </div>
 </div>
 
-<div id="a2hs">
-  <button id="a2hsX" onclick="this.parentElement.style.display='none'">✕</button>
-  <div class="a2hs-t">📱 TRUE FULLSCREEN</div>
-  <div class="a2hs-d" id="a2hsTxt"></div>
-</div>
-
 <div id="loader">
   <div class="ld-title">🚀 ESCAPE PROTOCOL</div>
   <div class="ld-sub">The AI Planet</div>
@@ -288,23 +248,37 @@ footer { display: none !important; }
 
 <script>
 // ============================================================
-// BACK BUTTON — INSTANT REDIRECT
-// Set a flag so resize/fullscreen events can't interfere
+// BACK BUTTON FIX — THE REAL PROBLEM:
+//
+// On Android, pressing back while fullscreen does this:
+//   1st back press → browser exits fullscreen (eats the press)
+//   2nd back press → actual navigation
+//
+// SOLUTION: When fullscreen exits AND we didn't exit it ourselves,
+// it means user pressed back → immediately redirect to hub.
 // ============================================================
+
 var isNavigating = false;
+var weExitedFullscreen = false; // Track if WE caused the exit
 
-history.pushState({ page: 'game' }, '', window.location.href);
-
-window.addEventListener('popstate', function(e) {
+function goToHub() {
+  if (isNavigating) return;
   isNavigating = true;
-  // Exit fullscreen first if needed (prevents resize flash)
-  try {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
-  } catch(err) {}
-  // Immediate redirect
   window.location.replace('../index.html');
-});
+}
+
+// When fullscreen exits: if we didn't cause it, user pressed back → redirect
+function onFullscreenExit() {
+  var isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  if (!isFs && gameStarted && !weExitedFullscreen && !isNavigating) {
+    // Fullscreen exited by user (back button) → go to hub
+    goToHub();
+  }
+  weExitedFullscreen = false;
+}
+
+document.addEventListener('fullscreenchange', onFullscreenExit);
+document.addEventListener('webkitfullscreenchange', onFullscreenExit);
 
 
 // ============================================================
@@ -312,14 +286,8 @@ window.addEventListener('popstate', function(e) {
 // ============================================================
 var gameStarted = false;
 
-var isStandalone = window.navigator.standalone === true
-  || window.matchMedia('(display-mode: standalone)').matches
-  || window.matchMedia('(display-mode: fullscreen)').matches;
-
 var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-var isAndroid = /Android/.test(navigator.userAgent);
-var isMobile = isIOS || isAndroid || ('ontouchstart' in window);
 
 
 function runGame() {
@@ -327,14 +295,12 @@ function runGame() {
   gameStarted = true;
 
   enterFullscreen();
-  if (isIOS && !isStandalone) iosHideBar();
+  if (isIOS) iosHideBar();
   unlockAudio();
 
   document.getElementById('splash').style.display = 'none';
-  document.getElementById('a2hs').style.display = 'none';
   document.getElementById('loader').style.display = 'flex';
 
-  // Dynamically load game scripts
   var s1 = document.createElement('script');
   s1.src = 'game.js';
   s1.onload = function() {
@@ -358,16 +324,9 @@ function enterFullscreen() {
   if (rfs) {
     rfs.call(el).then(function() {
       if (!isNavigating) { setTimeout(resizeCanvas, 100); setTimeout(resizeCanvas, 400); }
-    }).catch(function() {
-      if (isMobile && !isStandalone) showA2HS();
-    });
-  } else if (isMobile && !isStandalone) {
-    showA2HS();
+    }).catch(function() {});
   }
 }
-
-document.addEventListener('fullscreenchange', function() { if (!isNavigating) setTimeout(resizeCanvas, 150); });
-document.addEventListener('webkitfullscreenchange', function() { if (!isNavigating) setTimeout(resizeCanvas, 150); });
 
 
 // ============================================================
@@ -390,23 +349,6 @@ function iosHideBar() {
 
 
 // ============================================================
-// A2HS
-// ============================================================
-function showA2HS() {
-  var txt = document.getElementById('a2hsTxt');
-  txt.innerHTML = isIOS
-    ? 'Tap <b>Share ⬆️</b> → <b>"Add to Home Screen"</b>'
-    : 'Tap <b>⋮ Menu</b> → <b>"Add to Home Screen"</b>';
-  setTimeout(function() {
-    if (!document.fullscreenElement && !document.webkitFullscreenElement && !isStandalone) {
-      document.getElementById('a2hs').style.display = 'block';
-      setTimeout(function() { document.getElementById('a2hs').style.display = 'none'; }, 7000);
-    }
-  }, 3000);
-}
-
-
-// ============================================================
 // CANVAS RESIZE (CSS only)
 // ============================================================
 function resizeCanvas() {
@@ -416,7 +358,6 @@ function resizeCanvas() {
   var w, h;
   if (window.visualViewport) { w = window.visualViewport.width; h = window.visualViewport.height; }
   else { w = window.innerWidth; h = window.innerHeight; }
-  if (isStandalone) { w = screen.width; h = screen.height; }
   c.style.width = w + 'px';
   c.style.height = h + 'px';
 }
@@ -469,7 +410,6 @@ function unlockAudio() {
 
 // ============================================================
 // MODULE + DOWNLOAD PROGRESS
-// game.data = 18MB, so show real MB progress
 // ============================================================
 var Module = {
   arguments: ["./game.love"],
@@ -480,7 +420,6 @@ var Module = {
     if (isNavigating) return;
 
     if (!text) {
-      // Done loading
       document.getElementById("pct").textContent = "100%";
       document.getElementById("bar").style.width = "100%";
       document.getElementById("dlInfo").textContent = "Starting game...";
@@ -492,19 +431,13 @@ var Module = {
       return;
     }
 
-    // Parse Emscripten progress: "Downloading data... (loaded/total)"
     var m = text.match(/\((\d+)\/(\d+)\)/);
     if (m) {
-      var loaded = parseInt(m[1]);
-      var total = parseInt(m[2]);
+      var loaded = parseInt(m[1]), total = parseInt(m[2]);
       var p = Math.min(99, Math.round((loaded / total) * 100));
-
       document.getElementById("bar").style.width = p + "%";
       document.getElementById("pct").textContent = p + "%";
-
-      var lMB = (loaded / 1048576).toFixed(1);
-      var tMB = (total / 1048576).toFixed(1);
-      document.getElementById("dlInfo").textContent = lMB + " / " + tMB + " MB";
+      document.getElementById("dlInfo").textContent = (loaded/1048576).toFixed(1) + " / " + (total/1048576).toFixed(1) + " MB";
     }
   },
 
@@ -515,10 +448,6 @@ var Module = {
 };
 
 function applicationLoad() { Love(Module); }
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('../sw.js').catch(function() {});
-}
 
 resizeCanvas();
 </script>
