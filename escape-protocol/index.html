@@ -1,305 +1,227 @@
 <!doctype html>
 <html lang="en-us">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#000000">
-  <meta name="format-detection" content="telephone=no">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 
-  <title>SPACE SHOOTER</title>
+<title>SPACE SHOOTER</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
+<style>
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      background: #000;
-      overflow: hidden;
-      touch-action: none !important;
-      position: fixed;
-      inset: 0;
-      font-family: Arial, sans-serif;
-    }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    touch-action: none; /* Disables browser gestures like pull-to-refresh */
+    position: fixed;
+  }
 
-    #canvas {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      visibility: hidden;
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
-      touch-action: none;
-      transform: translateZ(0);
-    }
+  #canvas {
+    display: block;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    visibility: hidden;
+    image-rendering: pixelated;
+  }
 
-    /* Loader */
-    #loader {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(180deg, #050520, #000010);
-      color: white;
-      z-index: 1000;
-      touch-action: none;
-    }
+  /* LOADER & START OVERLAY */
+  #loader {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle, #0a0a2e 0%, #000000 100%);
+    z-index: 100;
+    cursor: pointer;
+  }
 
-    #logo {
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(1.2rem, 7vw, 2.5rem);
-      letter-spacing: 3px;
-      margin-bottom: 50px;
-      color: #00ffe7;
-      text-shadow: 0 0 15px #00ffe7, 0 0 30px #00b3ff;
-      text-align: center;
-    }
+  #logo {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(18px, 5vw, 36px);
+    color: #00ffe7;
+    text-shadow: 0 0 15px #00ffe7;
+    margin-bottom: 40px;
+    text-align: center;
+  }
 
-    #barBox {
-      width: 85%;
-      max-width: 500px;
-      height: 22px;
-      border-radius: 20px;
-      background: #222;
-      overflow: hidden;
-    }
+  #status {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+    color: #888;
+    margin-bottom: 20px;
+  }
 
-    #bar {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #00ffe7, #ff6b6b);
-      transition: width 0.3s ease;
-    }
+  #barBox {
+    width: 60%;
+    max-width: 280px;
+    height: 8px;
+    background: #222;
+    border-radius: 4px;
+    margin-bottom: 30px;
+    overflow: hidden;
+    border: 1px solid #333;
+  }
 
-    #status {
-      margin-top: 25px;
-      opacity: 0.9;
-      font-family: 'Press Start 2P', monospace;
-      font-size: clamp(0.6rem, 3.5vw, 1rem);
-    }
+  #bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #00ffe7, #ff6b6b);
+    transition: width 0.2s;
+  }
 
-    .fadeOut {
-      animation: fade 0.9s forwards;
-      pointer-events: none;
-    }
+  #tapHint {
+    display: none;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 11px;
+    color: #fff;
+    animation: pulse 1.5s infinite;
+  }
 
-    @keyframes fade {
-      to { opacity: 0; visibility: hidden; }
-    }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    /* Force Landscape Only - Hide everything in portrait */
-    #rotatePrompt {
-      display: flex;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.98);
-      color: white;
-      font-family: 'Press Start 2P', monospace;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 3000;
-      text-align: center;
-      padding: 40px;
-      touch-action: none;
-    }
+  /* ROTATE PROMPT */
+  #rotatePrompt {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #000;
+    z-index: 999;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-family: 'Press Start 2P', cursive;
+  }
 
-    #rotatePrompt .icon { 
-      font-size: 100px; 
-      margin-bottom: 40px; 
-      animation: rotate 4s linear infinite;
-    }
-
-    #rotatePrompt .text { 
-      font-size: clamp(1rem, 5vw, 1.8rem); 
-      line-height: 1.6; 
-    }
-
-    @keyframes rotate {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    /* Hide game content in portrait */
-    @media (orientation: portrait) {
-      #loader, #canvas { display: none !important; }
-    }
-
-    @media (orientation: landscape) {
-      #rotatePrompt { display: none !important; }
-    }
-  </style>
+  @media screen and (orientation: portrait) {
+    #rotatePrompt { display: flex; }
+  }
+</style>
 </head>
 
 <body>
 
-<!-- Force Landscape Prompt (covers everything in portrait) -->
-<div id="rotatePrompt">
-  <div class="icon">📱↻</div>
-  <div class="text">ROTATE TO LANDSCAPE<br>FOR FULLSCREEN GAMEPLAY</div>
-</div>
+  <div id="rotatePrompt">
+    <div style="font-size: 40px; margin-bottom: 20px;">📱↻</div>
+    <div style="font-size: 10px;">ROTATE TO LANDSCAPE</div>
+  </div>
 
-<!-- Loader -->
-<div id="loader">
-  <div id="logo">🚀 SPACE SHOOTER</div>
-  <div id="barBox"><div id="bar"></div></div>
-  <div id="status">Loading assets...</div>
-</div>
+  <div id="loader" onclick="startGame()">
+    <div id="logo">SPACE SHOOTER</div>
+    <div id="status">LOADING ASSETS...</div>
+    <div id="barBox"><div id="bar"></div></div>
+    <div id="tapHint">TAP TO START CHAMP</div>
+  </div>
 
-<canvas id="canvas"></canvas>
+  <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
 
-<script>
-// === Ultra-aggressive touch blocking ===
-const blockOptions = { passive: false, capture: true };
+  <script>
+    const canvas = document.getElementById("canvas");
+    const loader = document.getElementById("loader");
+    const tapHint = document.getElementById("tapHint");
+    let gameStarted = false;
 
-function blockDefault(e) {
-  e.preventDefault();
-  if (e.stopPropagation) e.stopPropagation();
-}
-
-['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(evt => {
-  document.addEventListener(evt, blockDefault, blockOptions);
-});
-
-document.addEventListener('contextmenu', e => e.preventDefault(), blockOptions);
-document.addEventListener('dblclick', e => e.preventDefault(), blockOptions);
-
-// === Canvas full viewport resize ===
-function resizeCanvas() {
-  const canvas = document.getElementById('canvas');
-  if (!canvas) return;
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  canvas.style.width = '100vw';
-  canvas.style.height = '100vh';
-}
-
-window.addEventListener('resize', resizeCanvas);
-window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 300));
-
-// === AUTO FULLSCREEN - Aggressive default activation ===
-let fullscreenActive = false;
-let attempts = 0;
-const MAX_ATTEMPTS = 8;
-
-function enterFullscreen() {
-  if (fullscreenActive || attempts >= MAX_ATTEMPTS) return;
-  attempts++;
-
-  const elem = document.documentElement;
-  const methods = [
-    elem.requestFullscreen,
-    elem.webkitRequestFullscreen,
-    elem.mozRequestFullScreen,
-    elem.msRequestFullscreen
-  ];
-
-  for (const method of methods) {
-    if (method) {
-      method.call(elem).then(() => {
-        fullscreenActive = true;
-        console.log('Fullscreen activated automatically');
-      }).catch(err => {
-        console.log('Fullscreen attempt failed:', err);
-      });
-      break;
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
-  }
+    window.addEventListener('resize', resize);
 
-  // Retry on resize/orientation (very useful when bars reappear)
-  setTimeout(enterFullscreen, 800);
-}
+    // --- FULLSCREEN & NAVIGATION ---
+    function startGame() {
+      if (tapHint.style.display !== "block") return;
 
-// Start auto-fullscreen attempts when game becomes visible
-function startAutoFullscreen() {
-  enterFullscreen();
-  window.addEventListener('resize', enterFullscreen);
-  window.addEventListener('orientationchange', () => setTimeout(enterFullscreen, 400));
-}
+      const el = document.documentElement;
+      const rfs = el.requestFullscreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      
+      if (rfs) {
+        rfs.call(el).then(() => {
+          // Detect when user exits fullscreen (usually via back button)
+          window.addEventListener('resize', detectBackNavigation);
+        }).catch(() => {});
+      }
 
-// === Audio unlock (required on mobile) ===
-let audioUnlocked = false;
-function unlockAudio() {
-  if (audioUnlocked) return;
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const buffer = ctx.createBuffer(1, 1, 22050);
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(ctx.destination);
-    source.start(0);
-    if (ctx.state === 'suspended') ctx.resume();
-  } catch {}
-  audioUnlocked = true;
-}
-document.addEventListener('touchstart', unlockAudio, { passive: true });
-document.addEventListener('touchend', unlockAudio, { passive: true });
+      // Audio unlock for mobile
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) { new AudioContext().resume(); }
 
-// Prevent accidental scrolling/zoom
-window.addEventListener('keydown', e => {
-  if ([32, 37, 38, 39, 40].includes(e.keyCode)) e.preventDefault();
-}, { passive: false });
+      loader.style.display = "none";
+      canvas.style.visibility = "visible";
+      gameStarted = true;
+      resize();
 
-// Initial resize
-resizeCanvas();
+      // Push a state so the physical back button has a "page" to leave
+      history.pushState({playing: true}, "");
+    }
 
-// === LÖVE.js Setup with Auto-Fullscreen Trigger ===
-var Module = {
-  arguments: ["./game.love"],
-  INITIAL_MEMORY: 33554432,
-  canvas: document.getElementById("canvas"),
-  setStatus: function(text) {
-    const status = document.getElementById("status");
-    if (status) status.textContent = text || "Starting...";
-    
-    if (!text) {
-      const loader = document.getElementById("loader");
-      const canvas = document.getElementById("canvas");
-      if (loader) loader.classList.add("fadeOut");
-      if (canvas) {
-        canvas.style.visibility = "visible";
-        resizeCanvas();
-        
-        // Start aggressive auto-fullscreen when game is ready
-        setTimeout(startAutoFullscreen, 300);
+    function detectBackNavigation() {
+      // If we are no longer in fullscreen, the user used a back gesture/button
+      const isFullscreen = document.fullscreenElement || document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement;
+      
+      if (gameStarted && !isFullscreen) {
+        window.removeEventListener('resize', detectBackNavigation);
+        window.location.href = "../index.html"; 
       }
     }
-  },
-  monitorRunDependencies: function(left) {
-    const total = this.totalDependencies || 0;
-    this.totalDependencies = Math.max(total, left);
-    const percent = total ? ((this.totalDependencies - left) / this.totalDependencies) * 100 : 0;
-    const bar = document.getElementById("bar");
-    if (bar) bar.style.width = percent + "%";
-  }
-};
 
-Module.setStatus("Downloading...");
-window.onerror = () => Module.setStatus("Error – check console");
+    // Secondary listener for browsers that fire popstate instead of resizing
+    window.onpopstate = function() {
+      window.location.href = "../index.html";
+    };
 
-function applicationLoad() { 
-  Love(Module); 
-}
-</script>
+    // // --- MULTI-TOUCH STABILITY ---
+    // window.addEventListener('touchstart', e => {
+    //   if (e.target === canvas) e.preventDefault();
+    // }, { passive: false });
+    
+    // window.addEventListener('touchmove', e => {
+    //   if (e.target === canvas) e.preventDefault();
+    // }, { passive: false });
 
-<script src="game.js"></script>
-<script async src="love.js" onload="applicationLoad()"></script>
+    // --- LOVE.JS ENGINE CONFIG ---
+    var Module = {
+      arguments: ["./game.love"],
+      INITIAL_MEMORY: 73554432,
+      canvas: canvas,
+      setStatus: function(text) {
+        const s = document.getElementById("status");
+        if (s) s.textContent = text;
+        if (!text) {
+          document.getElementById("barBox").style.display = "none";
+          if (s) s.style.display = "none";
+          tapHint.style.display = "block";
+        }
+      },
+      monitorRunDependencies: function(left) {
+        const total = this.totalDependencies || 0;
+        const percent = total ? ((total - left) / total) * 100 : 0;
+        document.getElementById("bar").style.width = percent + "%";
+      }
+    };
+  </script>
+  
+  <script src="game.js"></script>
+  <script async src="love.js" onload="Love(Module)"></script>
 
 </body>
 </html>
