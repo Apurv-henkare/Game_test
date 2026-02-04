@@ -45,7 +45,6 @@
       image-rendering: crisp-edges;
       touch-action: none;
       transform: translateZ(0); /* Hardware acceleration */
-      /* REMOVED: safe-area padding that was causing touch offset */
     }
 
     /* Loader */
@@ -59,7 +58,7 @@
       background: radial-gradient(circle, #0a0a2e 0%, #000000 100%);
       z-index: 100;
       cursor: pointer;
-      touch-action: manipulation; /* Allows taps without gestures */
+      touch-action: manipulation;
     }
 
     #logo {
@@ -150,13 +149,11 @@
     let gameStarted = false;
     let fullscreenTriggered = false;
 
-    // Global touch blocking (prevent scroll/zoom but allow propagation to canvas)
+    // Global touch blocking (prevent scroll/zoom but allow events to reach canvas)
     const blockOptions = { passive: false, capture: true };
 
     function blockDefault(e) {
       e.preventDefault();
-      // REMOVED stopPropagation() to ensure events reach the canvas
-      // Optional debug: console.log('Touch at:', e.touches[0].clientX, e.touches[0].clientY);
     }
 
     ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(evt => {
@@ -178,23 +175,25 @@
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
 
-    // Aggressive fullscreen
+    // Aggressive fullscreen on the CANVAS itself (better for games on mobile Chrome/Android)
     function tryFullscreen() {
-      if (fullscreenTriggered) return;
-      const elem = document.documentElement;
+      if (fullscreenTriggered || !canvas) return;
+
       const methods = [
-        elem.requestFullscreen,
-        elem.webkitRequestFullscreen,
-        elem.mozRequestFullScreen,
-        elem.msRequestFullscreen
+        canvas.requestFullscreen,
+        canvas.webkitRequestFullscreen,      // Older Android Chrome
+        canvas.mozRequestFullScreen,         // Firefox
+        canvas.msRequestFullscreen           // IE/Edge
       ];
 
       for (const method of methods) {
-        if (method) {
-          method.call(elem).then(() => {
-            fullscreenTriggered = true;
-            console.log('Fullscreen activated');
-          }).catch(err => console.warn('Fullscreen failed:', err));
+        if (typeof method === 'function') {
+          method.call(canvas)
+            .then(() => {
+              fullscreenTriggered = true;
+              console.log('Fullscreen activated on canvas');
+            })
+            .catch(err => console.warn('Fullscreen failed:', err));
           break;
         }
       }
@@ -204,7 +203,15 @@
     function startGame() {
       if (tapHint.style.display !== "block") return;
 
+      // Request fullscreen immediately on user gesture
       tryFullscreen();
+
+      // Lock to landscape on supported devices (Android Chrome works well)
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape-primary').catch(err => {
+          console.warn('Orientation lock failed:', err);
+        });
+      }
 
       // Audio unlock
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -219,9 +226,17 @@
       history.pushState({playing: true}, "");
     }
 
-    // Detect back/exit fullscreen
+    // Detect exit fullscreen or resize out of fullscreen
     window.addEventListener('resize', () => {
-      const isFullscreen = document.fullscreenElement || document.webkitIsFullScreen || document.mozFullScreen || document.msFullscreenElement;
+      const isFullscreen = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement ||
+        document.webkitIsFullScreen ||
+        document.mozFullScreen
+      );
+
       if (gameStarted && !isFullscreen) {
         window.location.href = "../index.html";
       }
@@ -229,14 +244,14 @@
 
     window.onpopstate = () => { window.location.href = "../index.html"; };
 
-    // Loader start triggers (both click and touchstart for reliability)
+    // Loader start triggers
     loader.addEventListener('click', startGame);
     loader.addEventListener('touchstart', startGame, { passive: false });
 
     // LÖVE.js Module
     var Module = {
       arguments: ["./game.love"],
-      INITIAL_MEMORY: 73554432,
+      INITIAL_MEMORY: 33554432,
       canvas: canvas,
       setStatus: function(text) {
         const s = document.getElementById("status");
@@ -245,7 +260,8 @@
           document.getElementById("barBox").style.display = "none";
           if (s) s.style.display = "none";
           tapHint.style.display = "block";
-          tryFullscreen(); // Auto-try after load
+          // Try fullscreen again after load (will only work if user taps anyway)
+          tryFullscreen();
         }
       },
       monitorRunDependencies: function(left) {
