@@ -38,10 +38,8 @@ html, body {
 #canvas {
   position: fixed !important;
   inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  width: 100dvw !important;
-  height: 100dvh !important;
+  width: 100% !important;
+  height: 100% !important;
   display: block !important;
   border: 0 !important;
   padding: 0 !important;
@@ -209,7 +207,7 @@ footer { display: none !important; }
     <!-- <div class="sp-icon">🐍</div> -->
     <!-- <div class="sp-title">SNAKE</div> -->
     <button id="runBtn" onclick="runGame()">▶ RUN GAME</button>
-    <div class="sp-hint">Tap to play fullscreen</div>
+    <div class="sp-hint">Tapp to play fullscreen</div>
     <div class="sp-size">Quick load</div>
   </div>
 </div>
@@ -306,12 +304,15 @@ function resizeCanvas() {
   var w, h;
   if (window.visualViewport) { w = window.visualViewport.width; h = window.visualViewport.height; }
   else { w = window.innerWidth; h = window.innerHeight; }
-  c.style.width = w + 'px';
-  c.style.height = h + 'px';
+  c.style.setProperty('width', w + 'px', 'important');
+  c.style.setProperty('height', h + 'px', 'important');
 }
 
 window.addEventListener("resize", function() { if (!isNavigating) resizeCanvas(); });
-if (window.visualViewport) window.visualViewport.addEventListener('resize', function() { if (!isNavigating) resizeCanvas(); });
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() { if (!isNavigating) resizeCanvas(); });
+  window.visualViewport.addEventListener('scroll', function() { if (!isNavigating) resizeCanvas(); });
+}
 window.addEventListener("orientationchange", function() {
   if (isNavigating) return;
   setTimeout(resizeCanvas, 100); setTimeout(resizeCanvas, 300); setTimeout(resizeCanvas, 600);
