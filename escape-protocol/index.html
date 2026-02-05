@@ -54,6 +54,43 @@ html, body {
   z-index: 1;
 }
 
+/* ========== iOS BACK BUTTON ========== */
+#iosBackBtn {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 99999;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid rgba(0,255,231,0.5);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.3s;
+}
+
+#iosBackBtn::after {
+  content: '✕';
+  color: #00ffe7;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+#iosBackBtn:active {
+  background: rgba(0,255,231,0.3);
+  transform: scale(0.9);
+}
+
+/* Auto-hide after 3 seconds, show on tap */
+#iosBackBtn.faded {
+  opacity: 0.3;
+}
+
 /* ========== SPLASH ========== */
 #splash {
   position: fixed;
@@ -221,6 +258,9 @@ footer { display: none !important; }
 
 <body>
 
+<!-- iOS Back Button (visible on iOS and PWA mode) -->
+<div id="iosBackBtn" onclick="goToHub()"></div>
+
 <div id="rotatePrompt">
   <div class="rt-icon">📱↻</div>
   <div class="rt-text">Please rotate your device<br>to landscape mode</div>
@@ -246,6 +286,23 @@ footer { display: none !important; }
 
 <script>
 // ============================================================
+// iOS PERFORMANCE: Cap devicePixelRatio EARLY
+// On iPhone 3x DPR = 9x more pixels. Capping to 1.0 gives
+// the single biggest perf win from the wrapper side.
+// ============================================================
+(function() {
+  var IOS_MAX_DPR = 1.0;   // 1.0 = max perf; 1.5 = balance quality/perf
+  var realDPR = window.devicePixelRatio || 1;
+  if (realDPR > IOS_MAX_DPR) {
+    Object.defineProperty(window, 'devicePixelRatio', {
+      get: function() { return IOS_MAX_DPR; },
+      configurable: true
+    });
+  }
+})();
+
+
+// ============================================================
 // DETECT PLATFORM
 // ============================================================
 var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
@@ -255,8 +312,9 @@ var isStandalone = window.navigator.standalone === true
   || window.matchMedia('(display-mode: standalone)').matches
   || window.matchMedia('(display-mode: fullscreen)').matches;
 
+
 // ============================================================
-// BACK BUTTON — works in BOTH browser fullscreen AND PWA mode
+// BACK BUTTON — 3 methods for all platforms
 // ============================================================
 var isNavigating = false;
 var weExitedFullscreen = false;
@@ -269,7 +327,7 @@ function goToHub() {
 
 // METHOD 1: Fullscreen exit detection (browser mode on Android)
 function onFullscreenExit() {
-  if (isStandalone) return; // PWA uses Method 2
+  if (isStandalone) return;
   var isFs = document.fullscreenElement || document.webkitFullscreenElement;
   if (!isFs && gameStarted && !weExitedFullscreen && !isNavigating) {
     goToHub();
@@ -280,13 +338,99 @@ document.addEventListener('fullscreenchange', onFullscreenExit);
 document.addEventListener('webkitfullscreenchange', onFullscreenExit);
 
 // METHOD 2: History API back button (PWA standalone mode)
-// Push a fake state so back button has somewhere to go
 if (isStandalone) {
   history.pushState({ game: true }, '');
   window.addEventListener('popstate', function(e) {
-    // User pressed back in PWA → go to hub
     goToHub();
   });
+}
+
+// METHOD 3: On-screen back button for iOS (no hardware back button)
+function showIOSBackBtn() {
+  var btn = document.getElementById('iosBackBtn');
+  if (!btn) return;
+
+  // Show on iOS always, and on any device in standalone/PWA mode
+  if (isIOS || isStandalone) {
+    btn.style.display = 'flex';
+
+    // Auto-fade after 4 seconds so it doesn't block gameplay
+    setTimeout(function() {
+      btn.classList.add('faded');
+    }, 4000);
+
+    // Show fully on any screen tap (not on the button itself)
+    document.addEventListener('touchstart', function() {
+      btn.classList.remove('faded');
+      clearTimeout(btn._fadeTimer);
+      btn._fadeTimer = setTimeout(function() {
+        btn.classList.add('faded');
+      }, 4000);
+    });
+  }
+}
+
+
+// ============================================================
+// iOS PERFORMANCE: Pre-create optimized WebGL context
+// Disabling alpha, antialias, and preserveDrawingBuffer
+// removes MSAA + buffer copies + compositor blending.
+// Forcing 'webgl' (not 'webgl2') avoids Safari's known
+// WebGL 2 performance regressions.
+// ============================================================
+var _preGLContext = null;
+(function() {
+  var c = document.getElementById('canvas');
+  if (!c) return;
+
+  // Try WebGL 1 first (better iOS perf), fall back to webgl2
+  var attrs = {
+    alpha: false,                  // no blending with HTML page
+    depth: true,                   // keep depth buffer for 3D
+    stencil: false,                // disable if game doesn't need it
+    antialias: false,              // huge mobile GPU savings
+    premultipliedAlpha: false,
+    preserveDrawingBuffer: false,  // allows buffer discard each frame
+    powerPreference: 'high-performance',
+    failIfMajorPerformanceCaveat: false
+  };
+
+  _preGLContext = c.getContext('webgl', attrs) || c.getContext('webgl2', attrs);
+})();
+
+
+// ============================================================
+// iOS PERFORMANCE: Set canvas render resolution
+// CSS size fills the screen; render target stays lower to
+// reduce GPU fill rate. On 3x DPR iPhones this is critical.
+// ============================================================
+function setCanvasRenderSize() {
+  var c = document.getElementById('canvas');
+  if (!c) return;
+
+  var w = window.innerWidth;
+  var h = window.innerHeight;
+  if (window.visualViewport) {
+    w = Math.round(window.visualViewport.width);
+    h = Math.round(window.visualViewport.height);
+  }
+
+  // Cap render resolution — the DPR override handles most of it,
+  // but this is a safety net to keep pixel count bounded
+  var maxW = 960, maxH = 540;
+  var dpr = window.devicePixelRatio || 1;  // already capped by our override
+  var rw = Math.round(w * dpr);
+  var rh = Math.round(h * dpr);
+
+  // Clamp if still too high (e.g. large tablets)
+  if (rw > maxW || rh > maxH) {
+    var scale = Math.min(maxW / rw, maxH / rh);
+    rw = Math.round(rw * scale);
+    rh = Math.round(rh * scale);
+  }
+
+  c.width = rw;
+  c.height = rh;
 }
 
 
@@ -304,9 +448,13 @@ function runGame() {
     if (isIOS) iosHideBar();
   }
   unlockAudio();
+  showIOSBackBtn();
 
   document.getElementById('splash').style.display = 'none';
   document.getElementById('loader').style.display = 'flex';
+
+  // iOS PERF: Set render size before engine loads
+  setCanvasRenderSize();
 
   var s1 = document.createElement('script');
   s1.src = 'game.js';
@@ -356,7 +504,7 @@ function iosHideBar() {
 
 
 // ============================================================
-// CANVAS RESIZE — simple, works everywhere
+// CANVAS RESIZE (CSS display size — not render target)
 // ============================================================
 function resizeCanvas() {
   if (isNavigating) return;
@@ -366,7 +514,6 @@ function resizeCanvas() {
   var w = window.innerWidth;
   var h = window.innerHeight;
 
-  // On some devices visualViewport is more accurate
   if (window.visualViewport) {
     w = Math.round(window.visualViewport.width);
     h = Math.round(window.visualViewport.height);
@@ -376,6 +523,9 @@ function resizeCanvas() {
   c.style.setProperty('height', h + 'px', 'important');
   c.style.setProperty('top', '0px', 'important');
   c.style.setProperty('left', '0px', 'important');
+
+  // iOS PERF: Also update render resolution on resize
+  if (gameStarted) setCanvasRenderSize();
 }
 
 window.addEventListener("resize", function() { if (!isNavigating) resizeCanvas(); });
@@ -391,7 +541,11 @@ window.addEventListener("orientationchange", function() {
 // ============================================================
 // TOUCH PREVENTION
 // ============================================================
-function pv(e) { if (gameStarted) e.preventDefault(); }
+function pv(e) {
+  // Don't block touches on the back button
+  if (e.target && e.target.id === 'iosBackBtn') return;
+  if (gameStarted) e.preventDefault();
+}
 document.addEventListener('touchstart', pv, { passive: false });
 document.addEventListener('touchmove', pv, { passive: false });
 document.addEventListener('touchend', pv, { passive: false });
@@ -411,28 +565,90 @@ window.addEventListener("keydown", function(e) {
 
 
 // ============================================================
-// AUDIO UNLOCK
+// AUDIO UNLOCK (improved lifecycle for iOS)
 // ============================================================
 var au = false;
+var _globalAudioCtx = null;
+
 function unlockAudio() {
   if (au) return;
   try {
-    var c = new (window.AudioContext || window.webkitAudioContext)();
-    var b = c.createBuffer(1,1,22050); var s = c.createBufferSource();
-    s.buffer = b; s.connect(c.destination); s.start(0);
-    if (c.state === 'suspended') c.resume();
+    _globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var b = _globalAudioCtx.createBuffer(1, 1, 22050);
+    var s = _globalAudioCtx.createBufferSource();
+    s.buffer = b;
+    s.connect(_globalAudioCtx.destination);
+    s.start(0);
+    if (_globalAudioCtx.state === 'suspended') _globalAudioCtx.resume();
   } catch(e) {}
   au = true;
 }
 
+// iOS PERF: Resume audio on interaction (iOS requires user gesture)
+function resumeAllAudio() {
+  try {
+    if (_globalAudioCtx && _globalAudioCtx.state === 'suspended') {
+      _globalAudioCtx.resume();
+    }
+    // Also resume Emscripten SDL2 audio context if it exists
+    if (typeof Module !== 'undefined' && Module.SDL2 && Module.SDL2.audioContext) {
+      if (Module.SDL2.audioContext.state === 'suspended') {
+        Module.SDL2.audioContext.resume();
+      }
+    }
+  } catch(e) {}
+}
+
+['touchstart', 'click'].forEach(function(evt) {
+  document.addEventListener(evt, resumeAllAudio, { once: false, passive: true });
+});
+
+
+// ============================================================
+// iOS PERF: Visibility API — pause/resume when backgrounded
+// Prevents frame queue buildup that causes stutter on return.
+// Suspends audio to free resources when tab is hidden.
+// ============================================================
+document.addEventListener('visibilitychange', function() {
+  if (typeof Module === 'undefined') return;
+  try {
+    var sdlCtx = Module.SDL2 && Module.SDL2.audioContext;
+    if (document.hidden) {
+      // Suspend audio when backgrounded
+      if (sdlCtx && sdlCtx.state === 'running') sdlCtx.suspend();
+      if (_globalAudioCtx && _globalAudioCtx.state === 'running') _globalAudioCtx.suspend();
+    } else {
+      // Resume audio when foregrounded
+      if (sdlCtx && sdlCtx.state === 'suspended') sdlCtx.resume();
+      if (_globalAudioCtx && _globalAudioCtx.state === 'suspended') _globalAudioCtx.resume();
+      // Re-sync canvas size in case orientation changed while hidden
+      if (gameStarted) {
+        setTimeout(resizeCanvas, 50);
+        setTimeout(resizeCanvas, 300);
+      }
+    }
+  } catch(e) {}
+});
+
 
 // ============================================================
 // MODULE + DOWNLOAD PROGRESS
+// iOS PERF additions:
+//   - INITIAL_MEMORY capped at 98MB (matching original)
+//   - Pre-initialized WebGL context injected
+//   - print/printErr suppressed to avoid console overhead
 // ============================================================
 var Module = {
   arguments: ["./game.love"],
-  INITIAL_MEMORY: 67108864,
+  INITIAL_MEMORY: 100663296,  
   canvas: (function() { return document.getElementById("canvas"); })(),
+
+  // iOS PERF: Inject the pre-created optimized WebGL context
+  preinitializedWebGLContext: _preGLContext,
+
+  // iOS PERF: Suppress console output (reduces main thread work)
+  print: function() {},
+  printErr: function() {},
 
   setStatus: function(text) {
     if (isNavigating) return;
@@ -447,9 +663,20 @@ var Module = {
       if (loader) loader.classList.add("fadeOut");
       if (canvas) {
         canvas.style.visibility = "visible";
+        setCanvasRenderSize();   // ensure render size is set
         resizeCanvas();
         if (!isStandalone) enterFullscreen();
       }
+
+      // iOS PERF: Remove splash/loader DOM nodes entirely
+      // once game is running — reduces compositor overhead
+      setTimeout(function() {
+        var splash = document.getElementById('splash');
+        var loader = document.getElementById('loader');
+        if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+        if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+      }, 1000);
+
       return;
     }
 

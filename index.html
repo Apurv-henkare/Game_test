@@ -222,90 +222,85 @@ footer {
 footer a { color: #00ffe7; text-decoration: none; }
 
 /* ============================== */
-/* PWA INSTALL BANNER             */
+/* PWA INSTALL SECTION — INLINE   */
 /* ============================== */
-#pwa-banner {
+#pwa-section {
   display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 10000;
-  background: linear-gradient(135deg, #1a1540 0%, #0d0a20 100%);
-  border-top: 2px solid #00ffe7;
-  padding: 16px 20px;
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
-  animation: slideUp 0.4s ease-out;
-}
-
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-.pwa-content {
   max-width: 600px;
-  margin: 0 auto;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.pwa-card {
+  background: linear-gradient(135deg, #1a1540 0%, #0d0a20 100%);
+  border: 2px solid #00ffe7;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 0 25px rgba(0,255,231,0.15);
+}
+
+.pwa-header {
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.pwa-icon { font-size: 2.2rem; flex-shrink: 0; }
+.pwa-header-icon { font-size: 1.8rem; }
 
-.pwa-text { flex: 1; }
-
-.pwa-title {
+.pwa-header-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: 0.55rem;
+  font-size: clamp(0.5rem, 2vw, 0.7rem);
   color: #00ffe7;
-  margin-bottom: 6px;
   line-height: 1.6;
 }
 
 .pwa-desc {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   color: #ddd;
-  line-height: 1.4;
+  line-height: 1.5;
+  margin-bottom: 14px;
 }
 
 .pwa-steps {
-  font-size: 0.72rem;
-  color: #ccc;
-  margin-top: 6px;
-  line-height: 1.6;
+  font-size: 0.8rem;
+  color: #fff;
+  line-height: 1.9;
+  background: rgba(0,255,231,0.08);
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,255,231,0.2);
+  text-align: left;
+  margin-bottom: 14px;
 }
 
 .pwa-steps b { color: #00ffe7; }
 
 .pwa-btn {
   font-family: 'Press Start 2P', monospace;
-  font-size: 0.5rem;
+  font-size: clamp(0.5rem, 1.8vw, 0.65rem);
   color: #000;
   background: #00ffe7;
   border: none;
   border-radius: 25px;
-  padding: 10px 18px;
+  padding: 12px 30px;
   cursor: pointer;
-  flex-shrink: 0;
   transition: transform 0.15s;
-  white-space: nowrap;
+  box-shadow: 0 0 20px #00ffe744;
+  width: 100%;
+  max-width: 300px;
 }
 .pwa-btn:active { transform: scale(0.92); }
 
-.pwa-close {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  background: none;
-  border: none;
-  color: #555;
-  font-size: 1.4rem;
-  cursor: pointer;
-  padding: 4px;
-  line-height: 1;
+.pwa-warning {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(0.35rem, 1.2vw, 0.45rem);
+  color: #ff6b6b;
+  margin-top: 10px;
+  line-height: 1.6;
 }
-.pwa-close:hover { color: #aaa; }
 
 /* Badges */
 .new-badge {
@@ -345,8 +340,8 @@ footer a { color: #00ffe7; text-decoration: none; }
   .games-section { padding: 10px 12px; }
   .section-title { font-size: 0.8rem; margin-bottom: 12px; }
   footer { padding: 20px 15px; }
-  .pwa-content { flex-wrap: wrap; }
-  .pwa-btn { width: 100%; text-align: center; margin-top: 4px; }
+  #pwa-section { padding: 0 12px; margin: 14px auto; }
+  .pwa-card { padding: 16px; }
 }
 
 @media (max-width: 380px) {
@@ -379,20 +374,6 @@ footer a { color: #00ffe7; text-decoration: none; }
 
 <body>
 
-<!-- PWA Install Banner -->
-<div id="pwa-banner">
-  <button class="pwa-close" onclick="closePWABanner()" aria-label="Close">&times;</button>
-  <div class="pwa-content">
-    <div class="pwa-icon">🎮</div>
-    <div class="pwa-text">
-      <div class="pwa-title">INSTALL GAMEHUB APP</div>
-      <div class="pwa-desc">Play fullscreen with no browser bars!</div>
-      <div class="pwa-steps" id="pwa-steps"></div>
-    </div>
-    <button class="pwa-btn" id="pwa-action-btn">INSTALL</button>
-  </div>
-</div>
-
 <!-- Header -->
 <header>
   <div class="logo">GAME<span>HUB</span></div>
@@ -412,6 +393,20 @@ footer a { color: #00ffe7; text-decoration: none; }
   <div class="stat">
     <div class="stat-number">0</div>
     <div class="stat-label">ADS</div>
+  </div>
+</div>
+
+<!-- PWA Install Section — ABOVE games, scrollable, not fixed -->
+<div id="pwa-section">
+  <div class="pwa-card">
+    <div class="pwa-header">
+      <div class="pwa-header-icon">📲</div>
+      <div class="pwa-header-title">INSTALL GAMEHUB APP</div>
+    </div>
+    <div class="pwa-desc" id="pwa-desc">Install the app for fullscreen gaming!</div>
+    <div class="pwa-steps" id="pwa-steps"></div>
+    <button class="pwa-btn" id="pwa-action-btn">INSTALL</button>
+    <div class="pwa-warning">⚠ Required for fullscreen on iOS</div>
   </div>
 </div>
 
@@ -484,7 +479,7 @@ footer a { color: #00ffe7; text-decoration: none; }
 
 <script>
 // ============================================================
-// PWA INSTALL LOGIC
+// PWA INSTALL — INLINE, NOT FIXED
 // ============================================================
 
 var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
@@ -494,66 +489,63 @@ var isStandalone = window.navigator.standalone === true
   || window.matchMedia('(display-mode: standalone)').matches
   || window.matchMedia('(display-mode: fullscreen)').matches;
 
-// Register service worker (non-blocking)
+// Register service worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(function() {});
 }
 
-// Android: Capture native install prompt
+// Android native install prompt
 var deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', function(e) {
   e.preventDefault();
   deferredPrompt = e;
-  showPWABanner('android');
-});
-
-function showPWABanner(platform) {
-  if (isStandalone) return;
-  
-  try {
-    var dismissed = localStorage.getItem('pwa-dismissed');
-    if (dismissed && (Date.now() - parseInt(dismissed)) < 3 * 24 * 60 * 60 * 1000) return;
-  } catch(e) {}
-
-  var banner = document.getElementById('pwa-banner');
-  var steps = document.getElementById('pwa-steps');
   var btn = document.getElementById('pwa-action-btn');
-
-  if (platform === 'ios') {
-    steps.innerHTML = 'Tap <b>Share</b> ⎋ then <b>"Add to Home Screen"</b>';
-    btn.textContent = 'GOT IT';
-    btn.onclick = function() { closePWABanner(); };
-  } else {
-    steps.innerHTML = 'Install as an app for the best experience';
-    btn.textContent = 'INSTALL';
-    btn.onclick = function() { installPWA(); };
-  }
-
-  banner.style.display = 'block';
-}
+  btn.textContent = 'INSTALL NOW';
+  btn.onclick = function() { installPWA(); };
+});
 
 function installPWA() {
   if (deferredPrompt) {
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(function() {
-      deferredPrompt = null;
-      closePWABanner();
-    });
+    deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
   }
 }
 
-function closePWABanner() {
-  document.getElementById('pwa-banner').style.display = 'none';
-  try { localStorage.setItem('pwa-dismissed', Date.now().toString()); } catch(e) {}
+function showPWASection() {
+  // If already installed, don't show
+  if (isStandalone) return;
+
+  var section = document.getElementById('pwa-section');
+  var steps = document.getElementById('pwa-steps');
+  var btn = document.getElementById('pwa-action-btn');
+  var desc = document.getElementById('pwa-desc');
+
+  if (isIOS) {
+    desc.textContent = 'iOS requires installing the app for fullscreen gaming!';
+    steps.innerHTML = '1. Tap the <b>Share button</b> ⎋ (bottom of Safari)<br>'
+      + '2. Scroll down and tap <b>"Add to Home Screen"</b><br>'
+      + '3. Tap <b>"Add"</b><br>'
+      + '4. Open GameHub from your home screen';
+    btn.textContent = 'I UNDERSTAND';
+    btn.onclick = function() { window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  } else if (isAndroid) {
+    desc.textContent = 'Install for fullscreen gaming with no browser bars!';
+    steps.innerHTML = 'Tap <b>INSTALL NOW</b> below, or use browser menu → <b>"Install app"</b>';
+    btn.textContent = 'INSTALL NOW';
+    btn.onclick = function() { installPWA(); };
+  } else {
+    desc.textContent = 'Install the app for the best experience!';
+    steps.innerHTML = 'Click the install icon in your browser address bar, or use menu → <b>"Install app"</b>';
+    btn.textContent = 'INSTALL';
+    btn.onclick = function() { installPWA(); };
+  }
+
+  section.style.display = 'block';
 }
 
-// Auto-show on load
+// Show on load
 window.addEventListener('load', function() {
-  setTimeout(function() {
-    if (isStandalone) return;
-    if (isIOS) showPWABanner('ios');
-    else if (isAndroid && deferredPrompt) showPWABanner('android');
-  }, 1500);
+  showPWASection();
 });
 
 // ============================================================

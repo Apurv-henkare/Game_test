@@ -54,6 +54,42 @@ html, body {
   z-index: 1;
 }
 
+/* ========== iOS BACK BUTTON ========== */
+#iosBackBtn {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 99999;
+  background: rgba(0,0,0,0.6);
+  border: 2px solid rgba(74,222,128,0.5);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.3s;
+}
+
+#iosBackBtn::after {
+  content: '✕';
+  color: #4ade80;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+#iosBackBtn:active {
+  background: rgba(74,222,128,0.3);
+  transform: scale(0.9);
+}
+
+#iosBackBtn.faded {
+  opacity: 0.3;
+}
+
 #splash {
   position: fixed;
   inset: 0;
@@ -200,6 +236,9 @@ footer { display: none !important; }
 
 <body>
 
+<!-- iOS Back Button -->
+<div id="iosBackBtn" onclick="goToHub()"></div>
+
 <div id="rotatePrompt">
   <div class="rt-icon">📱↻</div>
   <div class="rt-text">Please rotate your device<br>to landscape mode</div>
@@ -234,7 +273,7 @@ var isStandalone = window.navigator.standalone === true
   || window.matchMedia('(display-mode: fullscreen)').matches;
 
 // ============================================================
-// BACK BUTTON — works in BOTH browser fullscreen AND PWA mode
+// BACK BUTTON — 3 methods for all platforms
 // ============================================================
 var isNavigating = false;
 var weExitedFullscreen = false;
@@ -245,7 +284,7 @@ function goToHub() {
   window.location.replace('../index.html');
 }
 
-// METHOD 1: Fullscreen exit detection (browser mode on Android)
+// METHOD 1: Fullscreen exit (browser Android)
 function onFullscreenExit() {
   if (isStandalone) return;
   var isFs = document.fullscreenElement || document.webkitFullscreenElement;
@@ -257,12 +296,34 @@ function onFullscreenExit() {
 document.addEventListener('fullscreenchange', onFullscreenExit);
 document.addEventListener('webkitfullscreenchange', onFullscreenExit);
 
-// METHOD 2: History API back button (PWA standalone mode)
+// METHOD 2: History API (PWA mode)
 if (isStandalone) {
   history.pushState({ game: true }, '');
   window.addEventListener('popstate', function(e) {
     goToHub();
   });
+}
+
+// METHOD 3: On-screen back button for iOS
+function showIOSBackBtn() {
+  var btn = document.getElementById('iosBackBtn');
+  if (!btn) return;
+  
+  if (isIOS || isStandalone) {
+    btn.style.display = 'flex';
+    
+    setTimeout(function() {
+      btn.classList.add('faded');
+    }, 4000);
+    
+    document.addEventListener('touchstart', function() {
+      btn.classList.remove('faded');
+      clearTimeout(btn._fadeTimer);
+      btn._fadeTimer = setTimeout(function() {
+        btn.classList.add('faded');
+      }, 4000);
+    });
+  }
 }
 
 
@@ -280,6 +341,7 @@ function runGame() {
     if (isIOS) iosHideBar();
   }
   unlockAudio();
+  showIOSBackBtn();
 
   document.getElementById('splash').style.display = 'none';
   document.getElementById('loader').style.display = 'flex';
@@ -313,7 +375,7 @@ function enterFullscreen() {
 
 
 // ============================================================
-// iOS SCROLL TRICK (browser mode only)
+// iOS SCROLL TRICK
 // ============================================================
 function iosHideBar() {
   document.body.style.height = (window.innerHeight + 50) + 'px';
@@ -332,7 +394,7 @@ function iosHideBar() {
 
 
 // ============================================================
-// CANVAS RESIZE — simple, works everywhere
+// CANVAS RESIZE
 // ============================================================
 function resizeCanvas() {
   if (isNavigating) return;
@@ -366,7 +428,10 @@ window.addEventListener("orientationchange", function() {
 // ============================================================
 // TOUCH PREVENTION
 // ============================================================
-function pv(e) { if (gameStarted) e.preventDefault(); }
+function pv(e) {
+  if (e.target && e.target.id === 'iosBackBtn') return;
+  if (gameStarted) e.preventDefault();
+}
 document.addEventListener('touchstart', pv, { passive: false });
 document.addEventListener('touchmove', pv, { passive: false });
 document.addEventListener('touchend', pv, { passive: false });
