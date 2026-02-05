@@ -40,6 +40,7 @@ html, body {
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
+  height: 100dvh !important;
   display: block !important;
   border: 0 !important;
   padding: 0 !important;
@@ -267,13 +268,18 @@ function goToHub() {
 
 // When fullscreen exits: if we didn't cause it, user pressed back → redirect
 function onFullscreenExit() {
+  // In PWA standalone mode, fullscreen API isn't used — don't redirect
+  if (isStandalone) return;
   var isFs = document.fullscreenElement || document.webkitFullscreenElement;
   if (!isFs && gameStarted && !weExitedFullscreen && !isNavigating) {
-    // Fullscreen exited by user (back button) → go to hub
     goToHub();
   }
   weExitedFullscreen = false;
 }
+
+var isStandaloneEarly = window.navigator.standalone === true
+  || window.matchMedia('(display-mode: standalone)').matches
+  || window.matchMedia('(display-mode: fullscreen)').matches;
 
 document.addEventListener('fullscreenchange', onFullscreenExit);
 document.addEventListener('webkitfullscreenchange', onFullscreenExit);
@@ -287,13 +293,20 @@ var gameStarted = false;
 var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+var isStandalone = window.navigator.standalone === true
+  || window.matchMedia('(display-mode: standalone)').matches
+  || window.matchMedia('(display-mode: fullscreen)').matches;
+
 
 function runGame() {
   if (gameStarted) return;
   gameStarted = true;
 
-  enterFullscreen();
-  if (isIOS) iosHideBar();
+  // In PWA standalone mode, we're already fullscreen — skip browser fullscreen API
+  if (!isStandalone) {
+    enterFullscreen();
+    if (isIOS) iosHideBar();
+  }
   unlockAudio();
 
   document.getElementById('splash').style.display = 'none';
@@ -354,8 +367,24 @@ function resizeCanvas() {
   var c = document.getElementById("canvas");
   if (!c) return;
   var w, h;
-  if (window.visualViewport) { w = window.visualViewport.width; h = window.visualViewport.height; }
-  else { w = window.innerWidth; h = window.innerHeight; }
+  if (isStandalone) {
+    // In PWA mode, use screen dimensions for true fullscreen
+    w = screen.width;
+    h = screen.height;
+    // But on iOS PWA, screen.width/height may be wrong in landscape
+    if (window.innerWidth > window.innerHeight) {
+      w = Math.max(window.innerWidth, screen.width);
+      h = Math.max(window.innerHeight, screen.height);
+      // Ensure landscape
+      if (w < h) { var tmp = w; w = h; h = tmp; }
+    }
+  } else if (window.visualViewport) {
+    w = window.visualViewport.width;
+    h = window.visualViewport.height;
+  } else {
+    w = window.innerWidth;
+    h = window.innerHeight;
+  }
   c.style.setProperty('width', w + 'px', 'important');
   c.style.setProperty('height', h + 'px', 'important');
 }

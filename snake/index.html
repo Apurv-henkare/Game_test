@@ -40,6 +40,7 @@ html, body {
   inset: 0 !important;
   width: 100% !important;
   height: 100% !important;
+  height: 100dvh !important;
   display: block !important;
   border: 0 !important;
   padding: 0 !important;
@@ -237,6 +238,7 @@ function goToHub() {
 }
 
 function onFullscreenExit() {
+  if (isStandalone) return;
   var isFs = document.fullscreenElement || document.webkitFullscreenElement;
   if (!isFs && gameStarted && !weExitedFullscreen && !isNavigating) {
     goToHub();
@@ -249,12 +251,17 @@ document.addEventListener('webkitfullscreenchange', onFullscreenExit);
 
 var gameStarted = false;
 var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+var isStandalone = window.navigator.standalone === true
+  || window.matchMedia('(display-mode: standalone)').matches
+  || window.matchMedia('(display-mode: fullscreen)').matches;
 
 function runGame() {
   if (gameStarted) return;
   gameStarted = true;
-  enterFullscreen();
-  if (isIOS) iosHideBar();
+  if (!isStandalone) {
+    enterFullscreen();
+    if (isIOS) iosHideBar();
+  }
   unlockAudio();
   document.getElementById('splash').style.display = 'none';
   document.getElementById('loader').style.display = 'flex';
@@ -302,8 +309,21 @@ function resizeCanvas() {
   var c = document.getElementById("canvas");
   if (!c) return;
   var w, h;
-  if (window.visualViewport) { w = window.visualViewport.width; h = window.visualViewport.height; }
-  else { w = window.innerWidth; h = window.innerHeight; }
+  if (isStandalone) {
+    w = screen.width;
+    h = screen.height;
+    if (window.innerWidth > window.innerHeight) {
+      w = Math.max(window.innerWidth, screen.width);
+      h = Math.max(window.innerHeight, screen.height);
+      if (w < h) { var tmp = w; w = h; h = tmp; }
+    }
+  } else if (window.visualViewport) {
+    w = window.visualViewport.width;
+    h = window.visualViewport.height;
+  } else {
+    w = window.innerWidth;
+    h = window.innerHeight;
+  }
   c.style.setProperty('width', w + 'px', 'important');
   c.style.setProperty('height', h + 'px', 'important');
 }
