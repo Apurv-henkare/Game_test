@@ -8,6 +8,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="format-detection" content="telephone=no">
 <meta name="theme-color" content="#000000">
+<!-- Force landscape orientation hint for PWA -->
+<meta name="screen-orientation" content="landscape">
 
 <title>ESCAPE PROTOCOL - GameHub</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -230,7 +232,8 @@ html, body {
 .fadeOut { animation: fadeAway 0.5s forwards; pointer-events: none; }
 @keyframes fadeAway { to { opacity: 0; visibility: hidden; } }
 
-/* ========== ROTATE ========== */
+/* ========== ROTATE PROMPT ========== */
+/* Only shown on iOS where orientation lock doesn't work */
 #rotatePrompt {
   display: none;
   position: fixed;
@@ -247,6 +250,7 @@ html, body {
 .rt-icon { font-size: clamp(2rem, 8vh, 3rem); margin-bottom: 14px; }
 .rt-text { font-size: clamp(0.4rem, 1.8vw, 0.6rem); line-height: 2; }
 
+/* Show rotate prompt only on iOS in portrait (since iOS can't lock orientation) */
 @media (orientation: portrait) {
   #rotatePrompt.active { display: flex !important; }
 }
@@ -290,6 +294,8 @@ footer { display: none !important; }
 var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+var isAndroid = /Android/i.test(navigator.userAgent);
+
 var isStandalone = window.navigator.standalone === true
   || window.matchMedia('(display-mode: standalone)').matches
   || window.matchMedia('(display-mode: fullscreen)').matches;
@@ -301,6 +307,9 @@ var isTouchDevice = (navigator.maxTouchPoints || 0) > 0
   || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
 var isDesktop = !isTouchDevice;
+
+// Track if orientation lock succeeded
+var orientationLocked = false;
 
 
 // ============================================================
@@ -328,13 +337,6 @@ var _preGLContext = null;
 
 // ============================================================
 // CANVAS SIZE
-// 
-// The LÖVE game reads canvas.width/height via love.graphics.getDimensions()
-// The game's main.lua now has DYNAMIC virtual resolution that adapts
-// to the canvas aspect ratio.
-//
-// We set canvas = viewport size so the game knows the real screen dimensions.
-// The game then calculates its own virtual resolution (400-600 × 300).
 // ============================================================
 function setCanvasSize() {
   var c = document.getElementById('canvas');
@@ -348,10 +350,64 @@ function setCanvasSize() {
     h = Math.round(window.visualViewport.height);
   }
 
-  // Set canvas buffer to match viewport
-  // The LÖVE game will read this and adapt its virtual resolution
   c.width = w;
   c.height = h;
+}
+
+
+// ============================================================
+// ORIENTATION LOCK - Force Landscape
+// ============================================================
+function lockLandscape() {
+  // Method 1: Screen Orientation API (works on Android Chrome, some others)
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').then(function() {
+      console.log('Orientation locked to landscape');
+      orientationLocked = true;
+      // Hide rotate prompt since we locked it
+      var rp = document.getElementById('rotatePrompt');
+      if (rp) rp.classList.remove('active');
+    }).catch(function(err) {
+      console.log('Orientation lock failed:', err.message);
+      // Show rotate prompt on iOS since it can't lock
+      if (isIOS && isTouchDevice) {
+        var rp = document.getElementById('rotatePrompt');
+        if (rp) rp.classList.add('active');
+      }
+    });
+  } 
+  // Method 2: Deprecated lockOrientation (older browsers)
+  else if (screen.lockOrientation) {
+    try {
+      screen.lockOrientation('landscape');
+      orientationLocked = true;
+    } catch(e) {}
+  }
+  // Method 3: Mozilla prefix
+  else if (screen.mozLockOrientation) {
+    try {
+      screen.mozLockOrientation('landscape');
+      orientationLocked = true;
+    } catch(e) {}
+  }
+  // Method 4: MS prefix
+  else if (screen.msLockOrientation) {
+    try {
+      screen.msLockOrientation('landscape');
+      orientationLocked = true;
+    } catch(e) {}
+  }
+  // Fallback: Show rotate prompt on touch devices if lock failed
+  else if (isTouchDevice) {
+    var rp = document.getElementById('rotatePrompt');
+    if (rp) rp.classList.add('active');
+  }
+}
+
+function unlockOrientation() {
+  if (screen.orientation && screen.orientation.unlock) {
+    try { screen.orientation.unlock(); } catch(e) {}
+  }
 }
 
 
@@ -364,6 +420,7 @@ var weExitedFullscreen = false;
 function goToHub() {
   if (isNavigating) return;
   isNavigating = true;
+  unlockOrientation();
   window.location.replace('../index.html');
 }
 
@@ -415,10 +472,6 @@ function runGame() {
   if (gameStarted) return;
   gameStarted = true;
 
-  // Activate rotate prompt (only shows in portrait via CSS)
-  var rp = document.getElementById('rotatePrompt');
-  if (rp && isTouchDevice) rp.classList.add('active');
-
   if (!isStandalone) {
     enterFullscreen();
     if (isIOS) iosHideBar();
@@ -445,20 +498,29 @@ function runGame() {
 
 
 // ============================================================
-// FULLSCREEN (browser mode only)
+// FULLSCREEN + ORIENTATION LOCK
 // ============================================================
 function enterFullscreen() {
   if (isNavigating) return;
   var el = document.documentElement;
   if (document.fullscreenElement || document.webkitFullscreenElement) return;
+  
   var rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
   if (rfs) {
     rfs.call(el).then(function() {
       if (!isNavigating) { 
+        // Lock to landscape AFTER entering fullscreen (required by API)
+        setTimeout(lockLandscape, 100);
         setTimeout(resizeCanvas, 100); 
         setTimeout(resizeCanvas, 400); 
       }
-    }).catch(function() {});
+    }).catch(function() {
+      // Fullscreen failed, still try to lock orientation
+      lockLandscape();
+    });
+  } else {
+    // No fullscreen support, still try to lock orientation
+    lockLandscape();
   }
 }
 
@@ -484,7 +546,6 @@ function iosHideBar() {
 
 // ============================================================
 // CANVAS RESIZE
-// Both CSS display size AND canvas buffer size = viewport
 // ============================================================
 function resizeCanvas() {
   if (isNavigating) return;
@@ -518,7 +579,14 @@ if (window.visualViewport) {
 }
 window.addEventListener("orientationchange", function() {
   if (isNavigating) return;
-  setTimeout(resizeCanvas, 100); setTimeout(resizeCanvas, 300); setTimeout(resizeCanvas, 600);
+  setTimeout(resizeCanvas, 100); 
+  setTimeout(resizeCanvas, 300); 
+  setTimeout(resizeCanvas, 600);
+  
+  // Re-lock orientation if it was unlocked
+  if (gameStarted && !orientationLocked) {
+    setTimeout(lockLandscape, 200);
+  }
 });
 
 
